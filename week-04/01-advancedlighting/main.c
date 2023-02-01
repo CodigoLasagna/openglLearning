@@ -30,8 +30,7 @@ int main()
 	unsigned int tempVao;
 	size_t vec4size;
 	vec3 angleDir = {0.4f, 0.6f, 0.8f};
-	vec3 lightColor = {0.8f, 0.75f, 1.0f};
-	vec3 globalAmbience = {0.3f, 0.25f, 0.1f};
+	vec3 lightColor = {1.0f, 1.0f, 1.0f};
 	vec3 floorRot = {1.0f, 0.0f, 0.0f};
 	vec3 crateRot = {1.0f, 0.0f, 0.0f};
 	vec3 bushRot = {0.0f, 1.0f, 0.0f};
@@ -55,30 +54,27 @@ int main()
 	createTexture(&floorDiffuse, "./source/images/grass_02.png", 1, 1);
 	createTexture(&crateDiffuse, "./source/images/crate_03.png", 1, 1);
 	
-	instance_create_cube(&light, 0.0f, 0.0f, 0.0f, 100, 100, 100, 1.0f, 0);
+	instance_create_cube(&light, 0.0f, 5.0f, 0.0f, 100, 100, 100, 1.0f, 0);
 	instance_create_quad(&tile_floor, 0.0f, 0.0f, 0.0f, 100, 100, 1.0f, 2);
 	instance_create_cube(&crate, 0.0f, 0.0f, 0.0f, 100, 100, 100, 1.0f, 2);
 	
-	prepare_light(&modelShader, &lightShader, 0, lightColor, 0.022f, 0.0019f);
-	prepare_light(&objectShader, &lightShader, 0, lightColor, 0.0028f, 0.000014f);
-	prepare_light(&instanceShader, &lightShader, 0, lightColor, 0.0028f, 0.000014f);
+	prepare_light(&modelShader	 , &lightShader, 0, lightColor, 0.6f, 0.022f, 0.0019f);
+	prepare_light(&objectShader	 , &lightShader, 0, lightColor, 0.6f, 0.0028f, 0.000014f);
+	prepare_light(&instanceShader, &lightShader, 0, lightColor, 0.3f, 0.007f, 0.0002f);
 	
 	setInt(&modelShader, "material.diffuse", 0);
 	setFloat(&modelShader, "material.shininess", 32.0f);
 	setVec4(&modelShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0);
-	setVec3(&modelShader, "light[0].ambient", globalAmbience[0], globalAmbience[1], globalAmbience[2]);
 	setInt(&modelShader, "n_lights", 1);
 	
 	setInt(&objectShader, "material.diffuse", 0);
 	setFloat(&objectShader, "material.shininess", 32.0f);
 	setVec4(&objectShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0);
-	setVec3(&objectShader, "light[0].ambient", globalAmbience[0], globalAmbience[1], globalAmbience[2]);
 	setInt(&objectShader, "n_lights", 1);
 	
 	setInt(&instanceShader, "material.diffuse", 0);
-	setFloat(&instanceShader, "material.shininess", 32.0f);
+	setFloat(&instanceShader, "material.shininess", 0.0f);
 	setVec4(&instanceShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0); /*nota mental, 0 = luz de punto, 1 = luz direccional;*/
-	setVec3(&instanceShader, "light[0].ambient", globalAmbience[0], globalAmbience[1], globalAmbience[2]);
 	setInt(&instanceShader, "n_lights", 1);
 	
 	prepare_uniformblockData(&lightShader, "Matrices");
@@ -98,10 +94,10 @@ int main()
 		{
 			glm_mat4_identity(tile_floor.model);
 			tile_floor.pos[0] = x;
-			tile_floor.pos[1] = -8.51f;
+			tile_floor.pos[1] = -5.51f;
 			tile_floor.pos[2] = y;
 			glm_translate(tile_floor.model, tile_floor.pos);
-			glm_rotate(tile_floor.model, glm_rad(90.0f), floorRot);
+			glm_rotate(tile_floor.model, glm_rad(-90.0f), floorRot);
 			glm_mat4_copy(tile_floor.model, tilesMatrices[i]);
 			i++;
 		}
@@ -113,7 +109,7 @@ int main()
 		glm_vec3_fill(crate.scale, ((random()%30)/20.0f)+0.5f);
 		glm_mat4_identity(crate.model);
 		crate.pos[0] = (random()%((int)tilesAmountSquared*2))-tilesAmountSquared;
-		crate.pos[1] = -8.5f+crate.scale[0]/2;
+		crate.pos[1] = -5.5f+crate.scale[0]/2;
 		crate.pos[2] = (random()%((int)tilesAmountSquared*2))-tilesAmountSquared;
 		glm_translate(crate.model, crate.pos);
 		crateRot[0] = 1;
@@ -190,7 +186,10 @@ int main()
 		glm_translate(light.model, light.pos);
 		glm_scale(light.model, light.scale);
 		light.pos[0] = (sin(glfwGetTime()/2)*10);
+		
 		setVec4(&instanceShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0.0f);
+		setVec3(&instanceShader, "viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
+		
 		instance_draw(light, &lightShader, camera);
 		draw_skybox(skybox, camera);
 		

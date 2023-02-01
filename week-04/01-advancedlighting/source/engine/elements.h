@@ -83,7 +83,7 @@ int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int 
 int instance_draw(Tobject ID, unsigned int *shader, Tcamera camera);
 int instance_move(Tobject *ID);
 
-int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int n_light, vec3 color, float linear, float quadratic);
+int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int n_light, vec3 color, float ambient_mag, float linear, float quadratic);
 int load_model(Tmodel *model, char *directory, float x, float y, float z, int type);
 int draw_model(Tmodel *model, unsigned int *shader, Tcamera camera);
 

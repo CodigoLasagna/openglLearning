@@ -53,6 +53,7 @@ void main()
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 {
 	float distance;
+	float spec = 0;
 	vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
 	vec3 lightDir;
 	
@@ -71,7 +72,11 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords)) ;
 	
 	vec3 reflectDir = reflect(-lightDir, normal);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
+
+	if (material.shininess > 0)
+	{
+		spec = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
+	}
 	vec3 specular = light.specular * spec * texture(material.specular, TexCoords).rgb;
 	
 	vec3 emmision = texture(material.emmision, TexCoords).rgb;

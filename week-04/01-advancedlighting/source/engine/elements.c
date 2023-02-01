@@ -17,10 +17,10 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 	*/
 	GLfloat vertices[32] =
 	{
-		0.0f, 0.0f, 0.0f,	-0.0f, -0.0f, -0.0f,	0, 0,
-		0.0f, 0.0f, 0.0f,	 1.0f, -0.0f, -0.0f,	1, 0,
-		0.0f, 0.0f, 0.0f,	 1.0f,  1.0f, -0.0f,	1, 1,
-		0.0f, 0.0f, 0.0f,	-0.0f,  1.0f, -0.0f,	0, 1
+		0.0f, 0.0f, 0.0f,	-0.025f, -0.025f, 5.0f,	0, 0,
+		0.0f, 0.0f, 0.0f,	 0.025f, -0.025f, 5.0f,	1, 0,
+		0.0f, 0.0f, 0.0f,	 0.025f,  0.025f, 5.0f,	1, 1,
+		0.0f, 0.0f, 0.0f,	-0.025f,  0.025f, 5.0f,	0, 1
 	};
 	int indices[6] = 
 	{
@@ -44,10 +44,10 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 		nVertices += attributes[i];
 	}
 	
-	vertices[0] =				-hwidth;	vertices[1] =				-hheihght;			vertices[2]			= 0.0f;
+	vertices[0] =				-hwidth;	vertices[1] =				-hheihght;	vertices[2]					= 0.0f;
 	vertices[nVertices] =		 hwidth;	vertices[1+nVertices] =		-hheihght;	vertices[2+nVertices]		= 0.0f;
 	vertices[(nVertices*2)] =	 hwidth;	vertices[1+(nVertices*2)] =	 hheihght;	vertices[2+(nVertices*2)]	= 0.0f;
-	vertices[(nVertices*3)] =	-hwidth;	vertices[1+(nVertices*3)] =	 hheihght;	vertices[2+(nVertices*3)]	= 0.0f;
+		vertices[(nVertices*3)] =	-hwidth;	vertices[1+(nVertices*3)] =	 hheihght;	vertices[2+(nVertices*3)]	= 0.0f;
 	
 	
 	glGenVertexArrays(1, &(ID->VAO));
@@ -390,7 +390,7 @@ int apply_camera(unsigned int *shader, Tcamera camera)
 	return 0;
 }
 
-int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int n_light, vec3 color, float linear, float quadratic)
+int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int n_light, vec3 color, float ambient_mag, float linear, float quadratic)
 {
 	char helper[24];
 	char name[24];
@@ -402,7 +402,7 @@ int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int 
 	
 	strcpy(helper, name);
 	strcat(helper, "ambient");
-	setVec3(surface_shader, helper, 0.2f, 0.2f, 0.2f);
+	setVec3(surface_shader, helper, color[0]*ambient_mag, color[1]*ambient_mag, color[2]*ambient_mag);
 	
 	strcpy(helper, name);
 	strcat(helper, "diffuse");
@@ -410,7 +410,7 @@ int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int 
 	
 	strcpy(helper, name);
 	strcat(helper, "specular");
-	setVec3(surface_shader, helper, color[0], color[1], color[2]);
+	setVec3(surface_shader, helper, color[0]*2.0f, color[1]*2.0f, color[2]*2.0f);
 	
 	strcpy(helper, name);
 	strcat(helper, "constant");
@@ -430,7 +430,7 @@ int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int 
 	*/
 	setFloat(surface_shader, helper, quadratic);
 	
-	setVec3(light_shader, "color", color[0]*0.75f, color[1]*0.75, color[2]*0.75);
+	setVec3(light_shader, "color", color[0]*0.65f, color[1]*0.65f, color[2]*0.65f);
 	return 0;
 }
 
