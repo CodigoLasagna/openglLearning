@@ -608,23 +608,23 @@ int prepare_renderer(Trenderer *renderer, Tconfig config)
 
 int run_rederer(Trenderer *renderer, Tcamera camera)
 {
-		bind_texture(&(renderer->shader), renderer->texcolBuffer, 0);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, camera.nWidth, camera.nHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		
-		glDisable(GL_DEPTH_TEST);
-		glViewport(0, 0, camera.width, camera.height);
-		
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		instance_draw(renderer->screen, &(renderer->shader), camera);
-		
-		
-		/*render scene*/
-		glEnable(GL_DEPTH_TEST);
-		glViewport(0, 0, camera.nWidth, camera.nHeight);
-		glBindFramebuffer(GL_FRAMEBUFFER, renderer->frameBuffer);
+	bind_texture(&(renderer->shader), renderer->texcolBuffer, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, camera.nWidth, camera.nHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	
+	glDisable(GL_DEPTH_TEST);
+	glViewport(0, 0, camera.width, camera.height);
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	instance_draw(renderer->screen, &(renderer->shader), camera);
+	
+	
+	/*render scene*/
+	glEnable(GL_DEPTH_TEST);
+	glViewport(0, 0, camera.nWidth, camera.nHeight);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderer->frameBuffer);
 	return 0;
 }
 
