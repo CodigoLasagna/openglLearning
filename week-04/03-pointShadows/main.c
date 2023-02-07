@@ -11,8 +11,8 @@ int main()
 	Trenderer render;
 	Tskybox skybox;
 	Tobject tile_floor, crate, probCrate;
-	unsigned int floorDiffuse, crateDiffuse, hanckDiffuse, hanckSpecular;
-	unsigned int lightShader, modelShader, objectShader, instanceShader, simpleDepthShader, debugDepthShader, insShadowMapShader;
+	unsigned int floorDiffuse, crateDiffuse, crateSpecular, hanckDiffuse, hanckSpecular;
+	unsigned int lightShader, objectShader, instanceShader, simpleDepthShader, debugDepthShader, insShadowMapShader;
 	unsigned int uboMatrices;
 	unsigned int tilesAmount = 128;
 	const unsigned SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
@@ -54,16 +54,15 @@ int main()
 		{ 0.0f, 1.0f,  0.0f},
 	};
 	
-	window = prepareGLFW(600, 800);
+	window = prepareGLFW(800, 600);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glEnable(GL_MULTISAMPLE);
 	
 	prepareGLEW();
 	init_config(&config, 1920, 1080);
-	init_camera(&camera, config, 4);
+	init_camera(&camera, config, 1);
 	
 	createShader(&lightShader, "./source/shaders/vertexShaders/newPers.vert", "./source/shaders/fragmentShaders/light.frag");
-	createShader(&modelShader, "./source/shaders/vertexShaders/modPer.vert", "./source/shaders/fragmentShaders/surfaceLight.frag");
 	createShader(&instanceShader, "./source/shaders/vertexShaders/newInstancedPers.vert", "./source/shaders/fragmentShaders/surfaceLight.frag");
 	createShader(&objectShader, "./source/shaders/vertexShaders/newPers.vert", "./source/shaders/fragmentShaders/surfaceLight.frag");
 	createShader(&(render.shader), "./source/shaders/vertexShaders/rendertoquad.vert", "./source/shaders/fragmentShaders/sampleScreen.frag");
@@ -75,6 +74,7 @@ int main()
 	create_skybox(&skybox, "./source/images/cubemaps/skybox_00/", 1);
 	createTexture(&floorDiffuse, "./source/images/grass_02.png", 1, 1);
 	createTexture(&crateDiffuse, "./source/images/crate_03.png", 1, 1);
+	createTexture(&crateSpecular, "./source/images/container2_specular.png", 1, 1);
 	createTexture(&hanckDiffuse, "./source/images/diffuse.png", 0, 1);
 	createTexture(&hanckSpecular, "./source/images/specularHanck.png", 0, 1);
 	
@@ -85,29 +85,24 @@ int main()
 	
 	load_model(&avatar, "./source/models/hanck.obj", 0.0f, 1.11f, -1.0f, 1);
 	
-	prepare_light(&modelShader	 , &lightShader, 0, lightColor, 0.6f, 0.022f, 0.0019f);
 	prepare_light(&objectShader	 , &lightShader, 0, lightColor, 0.6f, 0.0028f, 0.000014f);
 	prepare_light(&instanceShader, &lightShader, 0, lightColor, 0.3f, 0.007f, 0.0002f);
 	prepare_light(&insShadowMapShader, &lightShader, 0, lightColor, 0.3f, 0.007f, 0.0002f);
 	
-	setInt(&modelShader, "material.diffuse", 0);
-	setInt(&modelShader, "material.specular", 1);
-	setFloat(&modelShader, "material.shininess", 32.0f);
-	setVec4(&modelShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0);
-	setInt(&modelShader, "n_lights", 1);
-	
 	setInt(&objectShader, "material.diffuse", 0);
+	setInt(&objectShader, "material.specular", 1);
 	setFloat(&objectShader, "material.shininess", 32.0f);
 	setVec4(&objectShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0);
 	setInt(&objectShader, "n_lights", 1);
 	
 	setInt(&instanceShader, "material.diffuse", 0);
-	setFloat(&instanceShader, "material.shininess", 0.0f);
+	setFloat(&instanceShader, "material.shininess", 32.0f);
 	setVec4(&instanceShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0); /*nota mental, 0 = luz de punto, 1 = luz direccional;*/
 	setInt(&instanceShader, "n_lights", 1);
 
 	setInt(&insShadowMapShader, "material.diffuse", 0);
-	setFloat(&insShadowMapShader, "material.shininess", 0.0f);
+	setInt(&insShadowMapShader, "material.specular", 2);
+	setFloat(&insShadowMapShader, "material.shininess", 32.0f);
 	setVec4(&insShadowMapShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0);
 	setInt(&insShadowMapShader, "n_lights", 1);
 	
@@ -152,7 +147,7 @@ int main()
 		glm_translate(crate.model, crate.pos);
 		crateRot[0] = 1;
 		crateRot[2] = 0;
-		glm_rotate(crate.model, glm_rad(90.0f), crateRot);
+		glm_rotate(crate.model, glm_rad(-90.0f), crateRot);
 		crateRot[0] = 0;
 		crateRot[2] = 1;
 		glm_rotate(crate.model, glm_rad(random()%360), crateRot);
@@ -257,6 +252,12 @@ int main()
 		glBindVertexArray(crate.VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, (crate.indices_n * 3), GL_UNSIGNED_INT, 0, cratesAmount);
 		
+		/*
+		bind_texture(&simpleDepthShader, hanckDiffuse, 0);
+		glBindVertexArray(avatar.VAO[0]);
+		glDrawElements(GL_TRIANGLES, (avatar.indices[0] * 3), GL_UNSIGNED_INT, NULL);
+		*/
+		
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		
 		run_uniformblockMatrices(uboMatrices, camera);
@@ -278,21 +279,25 @@ int main()
 		setVec4(&insShadowMapShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0.0f);
 		setMat4(&insShadowMapShader, "lightSpaceMatrix", lightSpaceMatrix);
 		
-		setVec4(&modelShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0.0f);
-		setVec3(&modelShader, "viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
+		setVec4(&objectShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0.0f);
+		setVec3(&objectShader, "viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
 		
 		bind_texture(&insShadowMapShader, floorDiffuse, 0);
+		bind_texture(&insShadowMapShader, floorDiffuse, 2);
 		useShader(&insShadowMapShader);
 		glBindVertexArray(tile_floor.VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, (tile_floor.indices_n * 3), GL_UNSIGNED_INT, 0, tilesAmount);
 		
 		bind_texture(&insShadowMapShader, crateDiffuse, 0);
+		bind_texture(&insShadowMapShader, crateSpecular, 2);
 		glBindVertexArray(crate.VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, (crate.indices_n * 3), GL_UNSIGNED_INT, 0, cratesAmount);
 		
-		bind_texture(&modelShader, hanckDiffuse, 0);
-		bind_texture(&modelShader, hanckSpecular, 1);
-		draw_model(&avatar, &modelShader, camera);
+		bind_texture(&objectShader, hanckDiffuse, 0);
+		bind_texture(&objectShader, hanckSpecular, 1);
+		draw_model(&avatar, &objectShader, camera);
+		glBindVertexArray(avatar.VAO[0]);
+		glDrawElements(GL_TRIANGLES, (avatar.indices[0] * 3), GL_UNSIGNED_INT, NULL);
 		
 		useShader(&debugDepthShader);
 		setFloat(&debugDepthShader, "near_plane", nearPlane);

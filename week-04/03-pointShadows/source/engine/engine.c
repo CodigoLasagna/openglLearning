@@ -81,9 +81,7 @@ GLFWwindow *prepareGLFW(int width, int height)
 		glfwSetCursorPosCallback(window, mouse_callback);
 		glfwSetScrollCallback(window, scroll_callback);
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);  
-		/*
 		stbi_set_flip_vertically_on_load(1);
-		*/
 		glDepthFunc(GL_LESS);
 		glEnable(GL_STENCIL_TEST);
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);

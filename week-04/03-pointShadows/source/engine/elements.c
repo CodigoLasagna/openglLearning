@@ -47,7 +47,7 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 	vertices[0] =				-hwidth;	vertices[1] =				-hheihght;	vertices[2]					= 0.0f;
 	vertices[nVertices] =		 hwidth;	vertices[1+nVertices] =		-hheihght;	vertices[2+nVertices]		= 0.0f;
 	vertices[(nVertices*2)] =	 hwidth;	vertices[1+(nVertices*2)] =	 hheihght;	vertices[2+(nVertices*2)]	= 0.0f;
-		vertices[(nVertices*3)] =	-hwidth;	vertices[1+(nVertices*3)] =	 hheihght;	vertices[2+(nVertices*3)]	= 0.0f;
+	vertices[(nVertices*3)] =	-hwidth;	vertices[1+(nVertices*3)] =	 hheihght;	vertices[2+(nVertices*3)]	= 0.0f;
 	
 	
 	glGenVertexArrays(1, &(ID->VAO));
