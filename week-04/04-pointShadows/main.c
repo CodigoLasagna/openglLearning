@@ -18,8 +18,8 @@ int main()
 	const unsigned SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 	float tilesAmountSquared = 0;
 	mat4 tilesMatrices[128];
-	unsigned int cratesAmount = 4;
-	mat4 cratesMatrices[4];
+	unsigned int cratesAmount = 3;
+	mat4 cratesMatrices[3];
 	float radius = 30.0f;
 	float offset = 10.5f;
 	float angle, displacement;
@@ -32,7 +32,7 @@ int main()
 	unsigned int tempVao;
 	size_t vec4size;
 	vec3 angleDir = {0.4f, 0.6f, 0.8f};
-	vec3 lightColor = {0.5f, 0.6f, 0.8f};
+	vec3 lightColor = {0.7f, 0.8f, 1.0f};
 	vec3 floorRot = {1.0f, 0.0f, 0.0f};
 	vec3 crateRot = {1.0f, 0.0f, 0.0f};
 	vec3 bushRot = {0.0f, 1.0f, 0.0f};
@@ -61,10 +61,10 @@ int main()
 	{
 		{ 1.0f, 0.0f,  0.0f},
 		{-1.0f, 0.0f,  0.0f},
-		{ 1.0f, 1.0f,  0.0f},
-		{ 1.0f,-1.0f,  0.0f},
-		{ 1.0f, 0.0f,  1.0f},
-		{ 1.0f, 0.0f, -1.0f},
+		{ 0.0f, 1.0f,  0.0f},
+		{ 0.0f,-1.0f,  0.0f},
+		{ 0.0f, 0.0f,  1.0f},
+		{ 0.0f, 0.0f, -1.0f},
 	};
 	
 	window = prepareGLFW(800, 600);
@@ -82,14 +82,14 @@ int main()
 	createShader(&(skybox.shader), "./source/shaders/vertexShaders/cubeMap.vert", "./source/shaders/fragmentShaders/showcubeMap.frag");
 	createShader(&debugDepthShader, "./source/shaders/vertexShaders/rendertoquad.vert", "./source/shaders/fragmentShaders/debuQuadDepth.frag");
 	createShader_geometry(&depthCubeShader, "./source/shaders/pointShadowDepthMap/vertex.vert", "./source/shaders/pointShadowDepthMap/fragment.frag", "./source/shaders/pointShadowDepthMap/geometry.geo");
-	createShader(&pointShadowShader, "./source/shaders/rendPointShadow/vertext.vert", "./source/shaders/rendPointShadow/fragment.frag");
+	createShader(&pointShadowShader, "./source/shaders/rendPointShadow/vertext.vert", "./source/shaders/rendPointShadow/fragmentTest.frag");
 	
 	create_skybox(&skybox, "./source/images/cubemaps/skybox_00/", 1);
 	createTexture(&floorDiffuse, "./source/images/grass_02.png", 1, 1);
 	createTexture(&crateDiffuse, "./source/images/crate_03.png", 1, 1);
 	createTexture(&crateSpecular, "./source/images/container2_specular.png", 1, 1);
 	
-	instance_create_cube(&light, 0.0f, 0.0f, 0.0f, 100, 100, 100, 0.5f, 0);
+	instance_create_cube(&light, 0.0f, 1.0f, 0.0f, 100, 100, 100, 0.5f, 0);
 	instance_create_quad(&tile_floor, 0.0f, 0.0f, 0.0f, 100, 100, 1.0f, 2);
 	instance_create_cube(&crate, 0.0f, 0.0f, 0.0f, 100, 100, 100, 0.5f, 2);
 	instance_create_cube(&probCrate, 0.0f, 0.0f, 0.0f, 100, 100, 100, 0.5f, 2);
@@ -112,7 +112,8 @@ int main()
 	setInt(&pointShadowShader, "material.diffuse", 0);
 	setInt(&pointShadowShader, "material.specular", 2);
 	setFloat(&pointShadowShader, "material.shininess", 32.0f);
-	setVec4(&pointShadowShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0);
+	setVec3(&pointShadowShader, "light[0].diffuse", lightColor[0], lightColor[1], lightColor[2]);
+	setVec3(&pointShadowShader, "light[0].ambient", lightColor[0]*0.7, lightColor[1]*0.7, lightColor[2]*0.7);
 	setInt(&pointShadowShader, "n_lights", 1);
 	
 	prepare_uniformblockData(&lightShader, "Matrices");
@@ -144,10 +145,10 @@ int main()
 	
 
 	seed = time(NULL);
-	srand(1675313989);
+	srand(1675999174);
 	for (i = 0; i < cratesAmount; i++)
 	{
-		glm_vec3_fill(crate.scale, ((random()%20)/10.0f)+0.8f);
+		glm_vec3_fill(crate.scale, ((random()%20)/20.0f)+0.5f);
 		glm_mat4_identity(crate.model);
 		crate.pos[0] = (random()%((int)tilesAmountSquared*2))-tilesAmountSquared;
 		crate.pos[1] = -2.5f+crate.scale[0]/2;
@@ -209,15 +210,15 @@ int main()
 	glGenFramebuffers(1, &depthMapFBO);
 	glGenTextures(1, &depthCubeMap);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
-	for (i = 0; i < 6; i++)
+	for (i = 0; i < 6; ++i)
 	{
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE); 
 	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE); 
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubeMap, 0);
@@ -226,34 +227,10 @@ int main()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	
 	aspect = (float)SHADOW_WIDTH/(float)SHADOW_HEIGHT;
-	near = 1.0f;
-	far = 25.0f;
+	near = 0.01f;
+	far = 35.0f;
 	
 	glm_perspective(glm_rad(90.0f), aspect, near, far, shadowProj);
-	
-	glm_vec3_add(lookatVecs[0], light.pos, vecHelper);
-	glm_look(light.pos, vecHelper, lookatVecs[3], matHelper);
-	glm_mul(shadowProj, shadowProj, shadowTransforms[0]);
-	
-	glm_vec3_add(lookatVecs[1], light.pos, vecHelper);
-	glm_look(light.pos, vecHelper, lookatVecs[3], matHelper);
-	glm_mul(shadowProj, matHelper, shadowTransforms[1]);
-	
-	glm_vec3_add(lookatVecs[2], light.pos, vecHelper);
-	glm_look(light.pos, vecHelper, lookatVecs[4], matHelper);
-	glm_mul(shadowProj, matHelper, shadowTransforms[2]);
-	
-	glm_vec3_add(lookatVecs[3], light.pos, vecHelper);
-	glm_look(light.pos, vecHelper, lookatVecs[5], matHelper);
-	glm_mul(shadowProj, matHelper, shadowTransforms[3]);
-	
-	glm_vec3_add(lookatVecs[4], light.pos, vecHelper);
-	glm_look(light.pos, vecHelper, lookatVecs[3], matHelper);
-	glm_mul(shadowProj, matHelper, shadowTransforms[4]);
-	
-	glm_vec3_add(lookatVecs[5], light.pos, vecHelper);
-	glm_look(light.pos, vecHelper, lookatVecs[3], matHelper);
-	glm_mul(shadowProj, matHelper, shadowTransforms[5]);
 	
 	setInt(&pointShadowShader, "depthMap", 1);
 	
@@ -266,12 +243,41 @@ int main()
 		
 		/*
 		light.pos[0] = sin(glfwGetTime()/2)*6;
-		light.pos[2] = cos(glfwGetTime()/2)*6;
 		*/
+		light.pos[0] = sin(glfwGetTime()/2.0f)*6.0f;
+		light.pos[1] = sin(glfwGetTime()*2.0f);
+		light.pos[2] = cos(glfwGetTime()/2.0f)*6.0f;
+		
+		glm_perspective(glm_rad(90.0f), aspect, near, far, shadowProj);
+		
+		glm_vec3_add(light.pos, lookatVecs[0], vecHelper);
+		glm_lookat(light.pos, vecHelper, lookatVecs[3], matHelper);
+		glm_mul(shadowProj, matHelper, shadowTransforms[0]);
+		
+		glm_vec3_add(light.pos, lookatVecs[1], vecHelper);
+		glm_lookat(light.pos, vecHelper, lookatVecs[3], matHelper);
+		glm_mul(shadowProj, matHelper, shadowTransforms[1]);
+		
+		glm_vec3_add(light.pos, lookatVecs[2], vecHelper);
+		glm_lookat(light.pos, vecHelper, lookatVecs[4], matHelper);
+		glm_mul(shadowProj, matHelper, shadowTransforms[2]);
+		
+		glm_vec3_add(light.pos, lookatVecs[3], vecHelper);
+		glm_lookat(light.pos, vecHelper, lookatVecs[5], matHelper);
+		glm_mul(shadowProj, matHelper, shadowTransforms[3]);
+		
+		glm_vec3_add(light.pos, lookatVecs[4], vecHelper);
+		glm_lookat(light.pos, vecHelper, lookatVecs[3], matHelper);
+		glm_mul(shadowProj, matHelper, shadowTransforms[4]);
+		
+		glm_vec3_add(light.pos, lookatVecs[5], vecHelper);
+		glm_lookat(light.pos, vecHelper, lookatVecs[3], matHelper);
+		glm_mul(shadowProj, matHelper, shadowTransforms[5]);
 		
 		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 		glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
+		
 		
 		useShader(&depthCubeShader);
 		setMat4(&depthCubeShader, "shadowMatrices[0]", shadowTransforms[0]);
@@ -284,11 +290,9 @@ int main()
 		setVec3(&depthCubeShader, "lightPos", light.pos[0], light.pos[1], light.pos[2]);
 		
 		useShader(&depthCubeShader);
-		bind_texture(&depthCubeShader, floorDiffuse, 0);
 		glBindVertexArray(tile_floor.VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, (tile_floor.indices_n * 3), GL_UNSIGNED_INT, 0, tilesAmount);
 		
-		bind_texture(&depthCubeShader, crateDiffuse, 0);
 		glBindVertexArray(crate.VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, (crate.indices_n * 3), GL_UNSIGNED_INT, 0, cratesAmount);
 		
@@ -308,16 +312,15 @@ int main()
 		glm_scale(light.model, light.scale);
 		
 		setVec3(&lightShader, "color", lightColor[0], lightColor[1], lightColor[2]);
-		setVec3(&pointShadowShader, "light[0].diffuse", lightColor[0], lightColor[1], lightColor[2]);
-		setVec3(&pointShadowShader, "light[0].ambient", lightColor[0], lightColor[1], lightColor[2]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
 		instance_draw(light, &lightShader, camera);
 		
-		setVec3(&pointShadowShader, "viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
+		setMat4(&pointShadowShader, "projection", camera.projection);
+		setMat4(&pointShadowShader, "view", camera.view);
 		setVec4(&pointShadowShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0.0f);
+		setVec3(&pointShadowShader, "viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
 		setFloat(&pointShadowShader, "far_plane", far);
-		
-		setVec4(&objectShader, "light[0].lightVector", light.pos[0], light.pos[1], light.pos[2], 0.0f);
-		setVec3(&objectShader, "viewPos", camera.pos[0], camera.pos[1], camera.pos[2]);
 		
 		bind_texture(&pointShadowShader, floorDiffuse, 0);
 		bind_texture(&pointShadowShader, floorDiffuse, 2);
@@ -330,12 +333,12 @@ int main()
 		glBindVertexArray(crate.VAO);
 		glDrawElementsInstanced(GL_TRIANGLES, (crate.indices_n * 3), GL_UNSIGNED_INT, 0, cratesAmount);
 		
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
 		
+		/*
 		useShader(&debugDepthShader);
 		setFloat(&debugDepthShader, "near_plane", nearPlane);
 		setFloat(&debugDepthShader, "far_plane", farPlane);
+		*/
 		
 		#if 0
 		render.texcolBuffer = depthMap;

@@ -10,10 +10,10 @@ void main()
 {
 	int face;
 	int i;
-	for(face = 0; face < 6; face++)
+	for(face = 0; face < 6; ++face)
 	{
 		gl_Layer = face;
-		for (i = 0; i < 3; i++)
+		for (i = 0; i < 3; ++i)
 		{
 			FragPos = gl_in[i].gl_Position;
 			gl_Position = shadowMatrices[face] * FragPos;
