@@ -721,3 +721,97 @@ int init_config(Tconfig *config, int width, int height)
 	(config->wireframe) = 0;
 	return 0;
 }
+
+int prepare_shadow_cubemap(TshadowCM *shadowCM, unsigned int shadow_width, unsigned int shadow_height, float near_plane, float far_plane)
+{
+	unsigned int i;
+	vec3 lav[6] =
+	{
+		{ 1.0f, 0.0f,  0.0f},
+		{-1.0f, 0.0f,  0.0f},
+		{ 0.0f, 1.0f,  0.0f},
+		{ 0.0f,-1.0f,  0.0f},
+		{ 0.0f, 0.0f,  1.0f},
+		{ 0.0f, 0.0f, -1.0f},
+	};
+	shadowCM->SHADOW_WIDTH = shadow_width;
+	shadowCM->SHADOW_HEIGHT = shadow_height;
+	shadowCM->near_plane = near_plane;
+	shadowCM->far_plane = far_plane;
+	shadowCM->aspect_ratio = (float) shadow_width / (float) shadow_height;
+	glm_vec3_copy(lav[0], shadowCM->lookatVecs[0]);
+	glm_vec3_copy(lav[1], shadowCM->lookatVecs[1]);
+	glm_vec3_copy(lav[2], shadowCM->lookatVecs[2]);
+	glm_vec3_copy(lav[3], shadowCM->lookatVecs[3]);
+	glm_vec3_copy(lav[4], shadowCM->lookatVecs[4]);
+	glm_vec3_copy(lav[5], shadowCM->lookatVecs[5]);
+	
+	glGenTextures(1, &(shadowCM->cube_map_texture));
+	glBindTexture(GL_TEXTURE_CUBE_MAP, shadowCM->cube_map_texture);
+	for (i = 0; i < 6; ++i)
+	{
+		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, shadow_width, shadow_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE); 
+	
+	glGenFramebuffers(1, &(shadowCM->frameBuffer));
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowCM->frameBuffer);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowCM->cube_map_texture, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	return 0;
+}
+
+int calculate_shadow_cubemap_light(TshadowCM *shadowCM, Tobject light, Tcamera camera)
+{
+	glm_perspective(glm_rad(90.0f), shadowCM->aspect_ratio, shadowCM->near_plane, shadowCM->far_plane, shadowCM->shadowProj);
+	
+	glm_vec3_add(light.pos, shadowCM->lookatVecs[0], shadowCM->vecHelper);
+	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[0]);
+	
+	glm_vec3_add(light.pos, shadowCM->lookatVecs[1], shadowCM->vecHelper);
+	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[1]);
+	
+	glm_vec3_add(light.pos, shadowCM->lookatVecs[2], shadowCM->vecHelper);
+	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[4], shadowCM->matHelper);
+	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[2]);
+	
+	glm_vec3_add(light.pos, shadowCM->lookatVecs[3], shadowCM->vecHelper);
+	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[5], shadowCM->matHelper);
+	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[3]);
+	
+	glm_vec3_add(light.pos, shadowCM->lookatVecs[4], shadowCM->vecHelper);
+	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[4]);
+	
+	glm_vec3_add(light.pos, shadowCM->lookatVecs[5], shadowCM->vecHelper);
+	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[5]);
+	
+	useShader(&(shadowCM->render_shader));
+	bind_cubemap(shadowCM->cube_map_texture, 10);
+	setVec3(&(shadowCM->render_shader), "viewPos", camera.pos);
+	setFloat(&(shadowCM->render_shader), "far_plane", shadowCM->far_plane);
+	useShader(&(shadowCM->depth_shader));
+	setMat4(&(shadowCM->depth_shader), "shadowMatrices[0]", shadowCM->shadowTransforms[0]);
+	setMat4(&(shadowCM->depth_shader), "shadowMatrices[1]", shadowCM->shadowTransforms[1]);
+	setMat4(&(shadowCM->depth_shader), "shadowMatrices[2]", shadowCM->shadowTransforms[2]);
+	setMat4(&(shadowCM->depth_shader), "shadowMatrices[3]", shadowCM->shadowTransforms[3]);
+	setMat4(&(shadowCM->depth_shader), "shadowMatrices[4]", shadowCM->shadowTransforms[4]);
+	setMat4(&(shadowCM->depth_shader), "shadowMatrices[5]", shadowCM->shadowTransforms[5]);
+	setFloat(&(shadowCM->depth_shader), "far_plane", shadowCM->far_plane);
+	
+	glViewport(0, 0, shadowCM->SHADOW_WIDTH, shadowCM->SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowCM->frameBuffer);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	
+	
+	return 0;
+}

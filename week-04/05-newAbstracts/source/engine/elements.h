@@ -9,12 +9,11 @@
 #include <assimp/cimport.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-	
+
 typedef struct _tconfig{
 	int resWidth, resHeight;
 	int wireframe;
 }Tconfig;
-
 
 typedef struct _tobject{
 	unsigned int VAO; /*Vertex array object*/
@@ -37,6 +36,22 @@ typedef struct _tmodel{
 	int type;
 	vec3 pos;
 }Tmodel;
+
+typedef struct _tshadow_cube_map
+{
+	unsigned int depth_shader, render_shader;
+	unsigned int cube_map_texture;
+	unsigned int frameBuffer;
+	unsigned int near_plane, far_plane;
+	unsigned int SHADOW_WIDTH, SHADOW_HEIGHT;
+	unsigned int aspect_ratio;
+	mat4 shadowTransforms[6];
+	mat4 shadowProj;
+	mat4 matHelper;
+	vec3 vecHelper;
+	vec3 lookatVecs[6];
+	GLenum faces;
+}TshadowCM;
 
 typedef struct _tcamera{
 	float currentFrame;
@@ -103,5 +118,8 @@ int prepare_uniformblockMatrices(unsigned int *uboBuffer, Tcamera camera);
 int run_uniformblockMatrices(unsigned int uboBuffer, Tcamera camera);
 
 int init_config(Tconfig *config, int width, int height);
+
+int prepare_shadow_cubemap(TshadowCM *shadowCM, unsigned int shadow_width, unsigned int shadow_height, float near_plane, float far_plane);
+int calculate_shadow_cubemap_light(TshadowCM *shadowCM, Tobject light, Tcamera camera);
 
 #endif
