@@ -97,6 +97,7 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int height, int thickness, float scale, int nAttributes);
 int instance_draw(Tobject ID, unsigned int *shader, Tcamera camera);
 int instanced_object_buffer(unsigned int *iBuffer, Tobject *ID, unsigned int amount, mat4 matrices[]);
+int instanced_object_draw(Tobject ID, unsigned int amount);
 
 int prepare_lightobj(unsigned int *light_shader, vec3 color);
 int prepare_material(unsigned int *surface_shader, int lights_number, float specular_str);

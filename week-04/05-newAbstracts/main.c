@@ -14,23 +14,23 @@ int main()
 	unsigned int floorDiffuse, floorSpecular, crateDiffuse, crateSpecular;
 	unsigned int lightShader, objectShader, instanceShader;
 	unsigned int uboMatrices;
+	unsigned int ibCrates, ibTiles;
 	unsigned int tilesAmount = 400;
-	float tilesAmountSquared = 0;
-	mat4 tilesMatrices[400];
 	unsigned int cratesAmount = 8;
-	mat4 cratesMatrices[8];
+	unsigned int i, j;
+	float tilesAmountSquared = 0;
 	float objectsHeight = -5.5f;
 	int x, y, z;
-	unsigned int i, j;
-	unsigned int ibCrates, ibTiles;
+	mat4 tilesMatrices[400];
+	mat4 cratesMatrices[8];
 	vec3 lightColor = {0.5f, 0.6f, 1.0f};
 	vec3 adjustRot = {1.0f, 0.0f, 0.0f};
 	vec3 crateRot = {0.0f, 0.0f, 1.0f};
 	unsigned int seed;
 	
 	window = prepareGLFW(800, 600);
-	
 	prepareGLEW();
+	
 	init_config(&config, 1920, 1080);
 	init_camera(&camera, config, 1);
 	
@@ -59,7 +59,7 @@ int main()
 	prepare_material_lum(&objectShader , 0, false, lightColor, 0.6f, 0.0028f, 0.000014f); /* 0.007  0.0002*/
 	prepare_material_lum(&instanceShader, 0, false, lightColor, 0.3f, 0.007f, 0.0002f);
 	prepare_material_lum(&(shadowCM.render_shader), 0, false, lightColor, 0.9f, 0.0014f, 0.000007f);
-
+	
 	setInt(&(shadowCM.render_shader), "depthMap", 10);
 	
 	prepare_uniformblockData(&lightShader, "Matrices");
@@ -69,8 +69,9 @@ int main()
 	prepare_uniformblockData(&(shadowCM.render_shader), "Matrices");
 	
 	prepare_uniformblockMatrices(&uboMatrices, camera);
-	
 	prepare_renderer(&render, config);
+	prepare_shadow_cubemap(&shadowCM, 1024, 1024, 0.01f, 256.0f);
+	
 	tilesAmountSquared = sqrt((float)tilesAmount)/2.0f;
 	
 	i = 0;
@@ -112,56 +113,48 @@ int main()
 	instanced_object_buffer(&ibTiles , &tile_floor, tilesAmount, tilesMatrices);
 	instanced_object_buffer(&ibCrates , &crate, cratesAmount, cratesMatrices);
 	
-	prepare_shadow_cubemap(&shadowCM, 1024, 1024, 0.01f, 256.0f);
-	
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwGetWindowSize(window, &(camera.width), &(camera.height));
 		camera.currentFrame = (float)glfwGetTime();
 		camera.deltaTime = camera.currentFrame - camera.lastFrame;
 		camera.lastFrame = camera.currentFrame;
-		calculate_shadow_cubemap_light(&shadowCM, light, camera);
+		
+		/*render normal scene*/
+		run_uniformblockMatrices(uboMatrices, camera);
+		run_camera(&camera, window);
+		run_renderer(&render, camera);
+		draw_skybox(skybox, camera);
+		processInput(window, &config);
 		
 		light.pos[0] = sin(glfwGetTime()/2.0f)*9.0f;
 		light.pos[1] = sin(glfwGetTime()*2.0f)-3;
 		light.pos[2] = cos(glfwGetTime()/2.0f)*9.0f;
-		
-		setVec3(&(shadowCM.depth_shader), "lightPos", light.pos);
-		setVec3(&(shadowCM.render_shader), "light[0].position", light.pos);
-		useShader(&(shadowCM.depth_shader));
-		glBindVertexArray(tile_floor.VAO);
-		glDrawElementsInstanced(GL_TRIANGLES, (unsigned int) (tile_floor.indices_n), GL_UNSIGNED_INT, 0, tilesAmount);
-		
-		glBindVertexArray(crate.VAO);
-		glDrawElementsInstanced(GL_TRIANGLES, (unsigned int) (crate.indices_n), GL_UNSIGNED_INT, 0, cratesAmount);
-		
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		
-		run_uniformblockMatrices(uboMatrices, camera);
-		run_camera(&camera, window);
-		run_renderer(&render, camera);
-		processInput(window, &config);
-		
-		glViewport(0, 0, camera.nWidth, camera.nHeight);
-		glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		glm_mat4_identity(light.model);
 		glm_translate(light.model, light.pos);
 		glm_scale(light.model, light.scale);
 		
 		instance_draw(light, &lightShader, camera);
-		
 		useShader(&(shadowCM.render_shader));
+		
 		bind_texture(floorDiffuse, 0);
 		bind_texture(floorSpecular, 1);
-		glBindVertexArray(tile_floor.VAO);
-		glDrawElementsInstanced(GL_TRIANGLES, (unsigned int) (tile_floor.indices_n), GL_UNSIGNED_INT, 0, tilesAmount);
+		instanced_object_draw(tile_floor, tilesAmount);
 		
 		bind_texture(crateDiffuse, 0);
 		bind_texture(crateSpecular, 1);
-		glBindVertexArray(crate.VAO);
-		glDrawElementsInstanced(GL_TRIANGLES, (unsigned int) (crate.indices_n), GL_UNSIGNED_INT, 0, cratesAmount);
+		instanced_object_draw(crate, cratesAmount);
+		
+		/*render shadow scene*/
+		calculate_shadow_cubemap_light(&shadowCM, light, camera);
+		
+		setVec3(&(shadowCM.depth_shader), "lightPos", light.pos);
+		setVec3(&(shadowCM.render_shader), "light[0].position", light.pos);
+		useShader(&(shadowCM.depth_shader));
+		
+		instanced_object_draw(tile_floor, tilesAmount);
+		instanced_object_draw(crate, tilesAmount);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
