@@ -45,10 +45,16 @@ void createTexture(unsigned int *ID, char *filedir, int type, int repeat)
 	stbi_image_free(data);
 }
 
-int bind_texture(unsigned int *ID, unsigned int texture, int layer)
+int bind_texture(unsigned int texture, int layer)
 {
 	glActiveTexture(GL_TEXTURE0 + layer);
 	glBindTexture(GL_TEXTURE_2D, texture);
+	return 0;
+}
+int bind_cubemap(unsigned int texture, int layer)
+{
+	glActiveTexture(GL_TEXTURE0 + layer);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 	return 0;
 }
 

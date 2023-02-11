@@ -81,9 +81,12 @@ typedef struct _trenderer{
 int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int height, float size, int nAttributes);
 int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int height, int thickness, float scale, int nAttributes);
 int instance_draw(Tobject ID, unsigned int *shader, Tcamera camera);
-int instance_move(Tobject *ID);
+int instanced_object_buffer(unsigned int *iBuffer, Tobject *ID, unsigned int amount, mat4 matrices[]);
 
-int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int n_light, vec3 color, float ambient_mag, float linear, float quadratic);
+int prepare_lightobj(unsigned int *light_shader, vec3 color);
+int prepare_material(unsigned int *surface_shader, int lights_number, float specular_str);
+int prepare_material_lum(unsigned int *surface_shader, int light_n, bool light_type, vec3 color, float ambient_mag, float linear, float quadratic);
+
 int load_model(Tmodel *model, char *directory, float x, float y, float z, int type);
 int draw_model(Tmodel *model, unsigned int *shader, Tcamera camera);
 

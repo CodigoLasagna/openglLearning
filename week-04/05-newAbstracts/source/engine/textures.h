@@ -15,7 +15,8 @@ typedef struct _tskybox{
 }Tskybox;
 
 void createTexture(unsigned int *ID, char *filedir, int type, int repeat);
-int bind_texture(unsigned int *ID, unsigned int texture, int layer);
+int bind_texture(unsigned int texture, int layer);
+int bind_cubemap(unsigned int texture, int layer);
 int create_skybox(Tskybox *skybox, char *folder, int type);
 int draw_skybox(Tskybox skybox, Tcamera camera);
 

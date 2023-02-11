@@ -6,15 +6,6 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 	int attributes[] = {3, 3, 2};
 	int i, nVertices = 0, n = 0;
 	float hwidth, hheihght;
-	/*
-	GLfloat vertices[20] =
-	{
-		0.0f, 0.0f, 0.0f, 		0, 0,
-		0.0f, 0.0f, 0.0f, 		1, 0,
-		0.0f, 0.0f, 0.0f, 		1, 1,
-		0.0f, 0.0f, 0.0f, 		0, 1
-	};
-	*/
 	GLfloat vertices[32] =
 	{
 		0.0f, 0.0f, 0.0f,	-0.025f, -0.025f, 5.0f,	0, 0,
@@ -182,10 +173,28 @@ int instance_draw(Tobject ID, unsigned int *shader, Tcamera camera)
 	return 1;
 }
 
-int instance_move(Tobject *ID)
+int instanced_object_buffer(unsigned int *iBuffer, Tobject *ID, unsigned int amount, mat4 matrices[])
 {
-	vec3 pos;
-	glm_translate(ID->model, ID->pos);
+	size_t vec4size = sizeof(vec4);
+	glGenBuffers(1, iBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, *iBuffer);
+	glBufferData(GL_ARRAY_BUFFER, (unsigned int) (amount * sizeof(mat4)), (float*)matrices, GL_STATIC_DRAW);
+	glBindVertexArray(ID->VAO);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)0);
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (1 * vec4size));
+	glEnableVertexAttribArray(5);
+	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (2 * vec4size));
+	glEnableVertexAttribArray(6);
+	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (3 * vec4size));
+	
+	glVertexAttribDivisor(3, 1);
+	glVertexAttribDivisor(4, 1);
+	glVertexAttribDivisor(5, 1);
+	glVertexAttribDivisor(6, 1);
+	glBindVertexArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	return 1;
 }
 
@@ -390,27 +399,47 @@ int apply_camera(unsigned int *shader, Tcamera camera)
 	return 0;
 }
 
-int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int n_light, vec3 color, float ambient_mag, float linear, float quadratic)
+int prepare_lightobj(unsigned int *light_shader, vec3 color)
+{
+	glm_vec3_muladds(color, 0.65, color);
+	setVec3(light_shader, "color", color);
+	return 0;
+}
+
+int prepare_material(unsigned int *surface_shader, int lights_number, float specular_str)
+{
+	setInt(surface_shader, "n_lights", lights_number);
+	setFloat(surface_shader, "material.shininess", specular_str);
+	setInt(surface_shader, "material.diffuse", 0);
+	setInt(surface_shader, "material.specular", 1);
+	
+	return 0;
+}
+
+int prepare_material_lum(unsigned int *surface_shader, int light_n, bool light_type, vec3 color, float ambient_mag, float linear, float quadratic)
 {
 	char helper[24];
 	char name[24];
 	char num[5];
+	vec3 vecHelper;
+	glm_vec3_fill(vecHelper, 0);
 	strcpy(name, "light[");
-	sprintf(num, "%d", n_light);
+	sprintf(num, "%d", light_n);
 	strcat(name, num);
 	strcat(name, "].");
 	
 	strcpy(helper, name);
 	strcat(helper, "ambient");
-	setVec3(surface_shader, helper, color[0]*ambient_mag, color[1]*ambient_mag, color[2]*ambient_mag);
+	glm_vec3_muladds(color, ambient_mag, vecHelper);
+	setVec3(surface_shader, helper, vecHelper);
 	
 	strcpy(helper, name);
 	strcat(helper, "diffuse");
-	setVec3(surface_shader, helper, color[0], color[1], color[2]);
+	setVec3(surface_shader, helper, color);
 	
 	strcpy(helper, name);
 	strcat(helper, "specular");
-	setVec3(surface_shader, helper, color[0]*2.0f, color[1]*2.0f, color[2]*2.0f);
+	setVec3(surface_shader, helper, color);
 	
 	strcpy(helper, name);
 	strcat(helper, "constant");
@@ -418,19 +447,16 @@ int prepare_light(unsigned int *surface_shader, unsigned int *light_shader, int 
 	
 	strcpy(helper, name);
 	strcat(helper, "linear");
-	/*
-	setFloat(surface_shader, helper, 0.09f);
-	*/
 	setFloat(surface_shader, helper, linear);
 	
 	strcpy(helper, name);
 	strcat(helper, "quadratic");
-	/*
-	setFloat(surface_shader, helper, 0.032f);
-	*/
 	setFloat(surface_shader, helper, quadratic);
+
+	strcpy(helper, name);
+	strcat(helper, "type");
+	setBool(surface_shader, helper, light_type);
 	
-	setVec3(light_shader, "color", color[0]*0.65f, color[1]*0.65f, color[2]*0.65f);
 	return 0;
 }
 
@@ -570,7 +596,10 @@ int draw_model(Tmodel *model, unsigned int *shader, Tcamera camera)
 	for (i = 0; i < model->max_meshes; i++)
 	{
 		glBindVertexArray(model->VAO[i]);
+		glDrawElements(GL_TRIANGLES, model->indices[i], GL_UNSIGNED_INT, NULL);
+		/*
 		glDrawElements(GL_TRIANGLES, (model->indices[i] * 3), GL_UNSIGNED_INT, NULL);
+		*/
 	}
 	return 0;
 }
@@ -609,7 +638,7 @@ int prepare_renderer(Trenderer *renderer, Tconfig config)
 
 int run_renderer(Trenderer *renderer, Tcamera camera)
 {
-	bind_texture(&(renderer->shader), renderer->texcolBuffer, 0);
+	bind_texture(renderer->texcolBuffer, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, camera.nWidth, camera.nHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 	
 	glDisable(GL_DEPTH_TEST);
@@ -629,7 +658,7 @@ int run_renderer(Trenderer *renderer, Tcamera camera)
 }
 int run_rendererShader(Trenderer *renderer, unsigned int *shader, Tcamera camera)
 {
-	bind_texture(&(renderer->shader), renderer->texcolBuffer, 0);
+	bind_texture(renderer->texcolBuffer, 0);
 	
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

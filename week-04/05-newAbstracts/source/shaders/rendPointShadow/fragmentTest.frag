@@ -20,7 +20,8 @@ struct Material {
 uniform samplerCube depthMap;
 
 struct Light{
-	vec4 lightVector;
+	vec3 position;
+	bool type;
 	
 	vec3 ambient;
 	vec3 diffuse;
@@ -77,15 +78,15 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	int blinn = 0;
 	float shadow;
 	
-	if (light.lightVector.w == 1.0f)
+	if (light.type)
 	{
-		lightDir = normalize(light.lightVector.xyz);
+		lightDir = normalize(light.position);
 	}
-	else if (light.lightVector.w == 0.0f)
+	else
 	{
-		lightDir = normalize(light.lightVector.xyz - fs_in.FragPos);
+		lightDir = normalize(light.position - fs_in.FragPos);
 	}
-	distance = length(light.lightVector.xyz - fs_in.FragPos);
+	distance = length(light.position - fs_in.FragPos);
 	
 	float diff = max(dot(normal, lightDir), 0.0f);
 	
@@ -125,7 +126,7 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 float ShadowCalculations(vec3 fragPos, Light light)
 {
 	int i;
-	vec3 fragToLight = fragPos - light.lightVector.xyz;
+	vec3 fragToLight = fragPos - light.position;
 	float currentDepth = length(fragToLight);
 	float shadow = 0.0f;
 	float bias = 0.15;

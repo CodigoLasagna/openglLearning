@@ -145,10 +145,10 @@ void setFloat(unsigned int *ID, char *name, float value)
 	glUniform1f(glGetUniformLocation(*ID, name), value);
 }
 
-void setVec3(unsigned int *ID, char *name, float v1, float v2, float v3)
+void setVec3(unsigned int *ID, char *name, vec3 vect)
 {
 	useShader(ID);
-	glUniform3f(glGetUniformLocation(*ID, name), v1, v2, v3);
+	glUniform3f(glGetUniformLocation(*ID, name), vect[0], vect[1], vect[2]);
 }
 
 void setVec4(unsigned int *ID, char *name, float v1, float v2, float v3, float v4)

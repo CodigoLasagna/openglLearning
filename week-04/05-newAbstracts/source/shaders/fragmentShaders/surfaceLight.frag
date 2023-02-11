@@ -10,7 +10,8 @@ struct Material {
 in vec2 TexCoords;
 
 struct Light{
-	vec4 lightVector;
+	vec3 position;
+	bool type;
 	
 	vec3 ambient;
 	vec3 diffuse;
@@ -61,15 +62,15 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	vec3 lightDir, halfwayDir, reflectDir;
 	int blinn = 0;
 	
-	if (light.lightVector.w == 1.0f)
+	if (light.type)
 	{
-		lightDir = normalize(light.lightVector.xyz);
+		lightDir = normalize(light.position);
 	}
-	else if (light.lightVector.w == 0.0f)
+	else
 	{
-		lightDir = normalize(light.lightVector.xyz - FragPos);
+		lightDir = normalize(light.position - FragPos);
 	}
-	distance = length(light.lightVector.xyz - FragPos);
+	distance = length(light.position - FragPos);
 	
 	float diff = max(dot(normal, lightDir), 0.0f);
 	

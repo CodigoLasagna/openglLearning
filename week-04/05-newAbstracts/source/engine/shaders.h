@@ -19,7 +19,7 @@ void useShader(unsigned int *ID);
 void setBool(unsigned int *ID, char *name, bool value);
 void setInt(unsigned int *ID, char *name, int value);
 void setFloat(unsigned int *ID, char *name, float value);
-void setVec3(unsigned int *ID, char *name, float v1, float v2, float v3);
+void setVec3(unsigned int *ID, char *name, vec3 vect);
 void setVec4(unsigned int *ID, char *name, float v1, float v2, float v3, float v4);
 void setMat4(unsigned int *ID, char *name, mat4 mat);
 
