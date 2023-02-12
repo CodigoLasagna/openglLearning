@@ -18,6 +18,7 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 		0, 2, 3,
 		0, 1, 2,
 	};
+	ID->max_meshes = 1;
 	nAttributes += 1;
 	(ID->indices_n) = sizeof(indices)/sizeof(indices[0]);
 	(ID->type) = nAttributes;
@@ -103,6 +104,7 @@ int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int 
 		4, 6, 5,
 		4, 7, 6,
 	};
+	ID->max_meshes = 1;
 	nAttributes += 1;
 	(ID->indices_n) = sizeof(indices)/sizeof(indices[0]);
 	(ID->type) = nAttributes;
@@ -467,7 +469,7 @@ int prepare_material_lum(unsigned int *surface_shader, int light_n, bool light_t
 	return 0;
 }
 
-int load_model(Tmodel *model, char *directory, float x, float y, float z, int type)
+int load_model(Tmodel *model, char *directory, float x, float y, float z, float scale, int type)
 {
 	const struct aiScene *scene;
 	const struct aiMesh *mesh;
@@ -483,6 +485,7 @@ int load_model(Tmodel *model, char *directory, float x, float y, float z, int ty
 	(model->pos[0]) = x;
 	(model->pos[1]) = y;
 	(model->pos[2]) = z;
+	glm_vec3_fill(model->scale, scale);
 	
 	scene = aiImportFile(directory, aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
 	(model->max_meshes) = scene->mNumMeshes;
@@ -592,6 +595,7 @@ int load_model(Tmodel *model, char *directory, float x, float y, float z, int ty
 	aiReleaseImport(scene);
 	glm_mat4_identity(model->model);
 	glm_translate(model->model, model->pos);
+	glm_scale(model->model, model->scale);
 	return 0;
 }
 
@@ -604,9 +608,46 @@ int draw_model(Tmodel *model, unsigned int *shader, Tcamera camera)
 	{
 		glBindVertexArray(model->VAO[i]);
 		glDrawElements(GL_TRIANGLES, model->indices[i], GL_UNSIGNED_INT, NULL);
-		/*
-		glDrawElements(GL_TRIANGLES, (model->indices[i] * 3), GL_UNSIGNED_INT, NULL);
-		*/
+	}
+	return 0;
+}
+
+int instanced_model_buffer(unsigned int *iBuffer, Tmodel *ID, unsigned int amount, mat4 matrices[])
+{
+	size_t vec4size = sizeof(vec4);
+	int i;
+	glGenBuffers(1, iBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, *iBuffer);
+	glBufferData(GL_ARRAY_BUFFER, (unsigned int) (amount * sizeof(mat4)), (float*)matrices, GL_STATIC_DRAW);
+	for (i = 0; i < ID->max_meshes; i++)
+	{
+		glBindVertexArray(ID->VAO[i]);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)0);
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (1 * vec4size));
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (2 * vec4size));
+		glEnableVertexAttribArray(6);
+		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (3 * vec4size));
+		
+		glVertexAttribDivisor(3, 1);
+		glVertexAttribDivisor(4, 1);
+		glVertexAttribDivisor(5, 1);
+		glVertexAttribDivisor(6, 1);
+		glBindVertexArray(0);
+	}
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	return 1;
+}
+
+int instanced_model_draw(Tmodel ID, unsigned int amount)
+{
+	int i;
+	for (i = 0; i < ID.max_meshes; i++)
+	{
+		glBindVertexArray(ID.VAO[i]);
+		glDrawElementsInstanced(GL_TRIANGLES, (unsigned int) (ID.indices[i]), GL_UNSIGNED_INT, 0, amount);
 	}
 	return 0;
 }
@@ -808,6 +849,7 @@ int calculate_shadow_cubemap_light(TshadowCM *shadowCM, Tobject light, Tcamera c
 	bind_cubemap(shadowCM->cube_map_texture, 10);
 	setVec3(&(shadowCM->render_shader), "viewPos", camera.pos);
 	setFloat(&(shadowCM->render_shader), "far_plane", shadowCM->far_plane);
+	setFloat(&(shadowCM->depth_shader), "far_plane", shadowCM->far_plane);
 	useShader(&(shadowCM->depth_shader));
 	setMat4(&(shadowCM->depth_shader), "shadowMatrices[0]", shadowCM->shadowTransforms[0]);
 	setMat4(&(shadowCM->depth_shader), "shadowMatrices[1]", shadowCM->shadowTransforms[1]);
@@ -815,7 +857,6 @@ int calculate_shadow_cubemap_light(TshadowCM *shadowCM, Tobject light, Tcamera c
 	setMat4(&(shadowCM->depth_shader), "shadowMatrices[3]", shadowCM->shadowTransforms[3]);
 	setMat4(&(shadowCM->depth_shader), "shadowMatrices[4]", shadowCM->shadowTransforms[4]);
 	setMat4(&(shadowCM->depth_shader), "shadowMatrices[5]", shadowCM->shadowTransforms[5]);
-	setFloat(&(shadowCM->depth_shader), "far_plane", shadowCM->far_plane);
 	
 	glViewport(0, 0, shadowCM->SHADOW_WIDTH, shadowCM->SHADOW_HEIGHT);
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowCM->frameBuffer);

@@ -11,21 +11,25 @@ int main()
 	TshadowCM shadowCM;
 	Tobject light;
 	Tobject tile_floor, crate;
+	Tmodel grass_blade;
 	unsigned int floorDiffuse, floorSpecular, crateDiffuse, crateSpecular;
-	unsigned int lightShader, objectShader, instanceShader;
+	unsigned int lightShader, objectShader, instanceShader, grass_shader;
 	unsigned int uboMatrices;
-	unsigned int ibCrates, ibTiles;
-	unsigned int tilesAmount = 400;
-	unsigned int cratesAmount = 8;
+	unsigned int ibCrates, ibTiles, ibGrassblades;
+	unsigned int tilesAmount = 1024;
+	unsigned int cratesAmount = 16;
+	unsigned int gbladesAmount = 100000;
 	unsigned int i, j;
 	float tilesAmountSquared = 0;
 	float objectsHeight = -5.5f;
 	int x, y, z;
-	mat4 tilesMatrices[400];
-	mat4 cratesMatrices[8];
+	mat4 tilesMatrices[1024];
+	mat4 cratesMatrices[16];
+	mat4 bladesMatrices[100000];
 	vec3 lightColor = {0.5f, 0.6f, 1.0f};
 	vec3 adjustRot = {1.0f, 0.0f, 0.0f};
 	vec3 crateRot = {0.0f, 0.0f, 1.0f};
+	vec3 bladeRot = {0.0f, 1.0f, 0.0f};
 	unsigned int seed;
 	
 	window = prepareGLFW(800, 600);
@@ -36,6 +40,7 @@ int main()
 	
 	createShader(&lightShader, "./source/shaders/vertexShaders/newPers.vert", "./source/shaders/fragmentShaders/light.frag");
 	createShader(&instanceShader, "./source/shaders/vertexShaders/newInstancedPers.vert", "./source/shaders/fragmentShaders/surfaceLight.frag");
+	createShader(&grass_shader, "./source/shaders/vertexShaders/instanced_shaderGrass.vert", "./source/shaders/rendPointShadow/fragmentTest.frag");
 	createShader(&objectShader, "./source/shaders/vertexShaders/newPers.vert", "./source/shaders/fragmentShaders/surfaceLight.frag");
 	createShader(&(render.shader), "./source/shaders/vertexShaders/rendertoquad.vert", "./source/shaders/fragmentShaders/sampleScreen.frag");
 	createShader(&(skybox.shader), "./source/shaders/vertexShaders/cubeMap.vert", "./source/shaders/fragmentShaders/showcubeMap.frag");
@@ -52,20 +57,26 @@ int main()
 	instance_create_quad(&tile_floor, 0.0f, 0.0f, 0.0f, 100, 100, 1.0f, 2);
 	instance_create_cube(&crate, 0.0f, 0.0f, 0.0f, 100, 100, 100, 0.5f, 2);
 	
+	load_model(&grass_blade, "./source/models/grass blades/blade_00.obj", 0.0f, -5.41f, 0.0f, 0.1f, 0);
+	
 	prepare_lightobj(&lightShader, lightColor);
 	prepare_material(&objectShader, 1, 32.0f);
 	prepare_material(&instanceShader, 1, 32.0f);
+	prepare_material(&grass_shader, 1, 32.0f);
 	prepare_material(&(shadowCM.render_shader), 1, 32.0f);
 	prepare_material_lum(&objectShader , 0, false, lightColor, 0.6f, 0.0028f, 0.000014f); /* 0.007  0.0002*/
 	prepare_material_lum(&instanceShader, 0, false, lightColor, 0.3f, 0.007f, 0.0002f);
+	prepare_material_lum(&grass_shader, 0, true, lightColor, 1.0f, 0.0014f, 0.000007f);
 	prepare_material_lum(&(shadowCM.render_shader), 0, false, lightColor, 0.9f, 0.0014f, 0.000007f);
 	
 	setInt(&(shadowCM.render_shader), "depthMap", 10);
+	setInt(&grass_shader, "depthMap", 10);
 	
 	prepare_uniformblockData(&lightShader, "Matrices");
 	prepare_uniformblockData(&(skybox.shader), "Matrices");
 	prepare_uniformblockData(&objectShader, "Matrices");
 	prepare_uniformblockData(&instanceShader, "Matrices");
+	prepare_uniformblockData(&grass_shader, "Matrices");
 	prepare_uniformblockData(&(shadowCM.render_shader), "Matrices");
 	
 	prepare_uniformblockMatrices(&uboMatrices, camera);
@@ -91,10 +102,10 @@ int main()
 	}
 	
 	seed = time(NULL);
-	srand(1675999174);
+	srand(seed);
 	for (i = 0; i < cratesAmount; i++)
 	{
-		glm_vec3_fill(crate.scale, ((random()%30)/40.0f)+0.5f);
+		glm_vec3_fill(crate.scale, ((random()%30)/30.0f)+0.5f);
 		glm_mat4_identity(crate.model);
 		crate.pos[0] = (random()%((int)tilesAmountSquared*2))-tilesAmountSquared;
 		crate.pos[1] = objectsHeight+crate.scale[0]/2;
@@ -109,9 +120,24 @@ int main()
 		glm_scale(crate.model, crate.scale);
 		glm_mat4_copy(crate.model, cratesMatrices[i]);
 	}
+	for (i = 0; i < gbladesAmount; i++)
+	{
+		glm_mat4_identity(grass_blade.model);
+		grass_blade.pos[0] = (random()%(long)(tilesAmountSquared*2.0f))-tilesAmountSquared;
+		grass_blade.pos[2] = (random()%(long)(tilesAmountSquared*2.0f))-tilesAmountSquared;
+		grass_blade.pos[0] += ((float)(random()%10000)/10000.0f)-0.5f;
+		grass_blade.pos[2] += ((float)(random()%10000)/10000.0f)-0.5f;
+		glm_translate(grass_blade.model, grass_blade.pos);
+		grass_blade.scale[1] = 0.1;
+		grass_blade.scale[1] += (float)(random()%5)/50.0f;
+		glm_scale(grass_blade.model, grass_blade.scale);
+		glm_rotate(grass_blade.model, -glm_rad(random()%360), bladeRot);
+		glm_mat4_copy(grass_blade.model, bladesMatrices[i]);
+	}
 	
 	instanced_object_buffer(&ibTiles , &tile_floor, tilesAmount, tilesMatrices);
 	instanced_object_buffer(&ibCrates , &crate, cratesAmount, cratesMatrices);
+	instanced_model_buffer(&ibCrates , &grass_blade, gbladesAmount, bladesMatrices);
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -127,16 +153,25 @@ int main()
 		draw_skybox(skybox, camera);
 		processInput(window, &config);
 		
-		light.pos[0] = sin(glfwGetTime()/2.0f)*9.0f;
+		light.pos[0] = sin(glfwGetTime()/2.0f)*12.0f;
 		light.pos[1] = sin(glfwGetTime()*2.0f)-3;
-		light.pos[2] = cos(glfwGetTime()/2.0f)*9.0f;
+		light.pos[2] = cos(glfwGetTime()/2.0f)*12.0f;
 		
 		glm_mat4_identity(light.model);
 		glm_translate(light.model, light.pos);
 		glm_scale(light.model, light.scale);
 		
 		instance_draw(light, &lightShader, camera);
+		useShader(&grass_shader);
+		bind_cubemap(shadowCM.cube_map_texture, 10);
+		setVec3(&grass_shader, "viewPos", camera.pos);
+		setFloat(&grass_shader, "far_plane", shadowCM.far_plane);
+		setFloat(&grass_shader, "far_plane", shadowCM.far_plane);
+		
+		bind_texture(floorDiffuse, 0);
+		instanced_model_draw(grass_blade, gbladesAmount);
 		useShader(&(shadowCM.render_shader));
+		
 		
 		bind_texture(floorDiffuse, 0);
 		bind_texture(floorSpecular, 1);
@@ -149,8 +184,10 @@ int main()
 		/*render shadow scene*/
 		calculate_shadow_cubemap_light(&shadowCM, light, camera);
 		
+		setFloat(&grass_shader, "time", sin(glfwGetTime()));
 		setVec3(&(shadowCM.depth_shader), "lightPos", light.pos);
 		setVec3(&(shadowCM.render_shader), "light[0].position", light.pos);
+		setVec3(&grass_shader, "light[0].position", light.pos);
 		useShader(&(shadowCM.depth_shader));
 		
 		instanced_object_draw(tile_floor, tilesAmount);

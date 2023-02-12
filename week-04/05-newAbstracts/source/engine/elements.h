@@ -19,6 +19,7 @@ typedef struct _tobject{
 	unsigned int VAO; /*Vertex array object*/
 	unsigned int VBO; /*Vertex buffer object*/
 	unsigned int EBO; /*Element buffer object*/
+	unsigned int max_meshes;
 	int width, height, thickness;
 	vec3 pos;
 	vec3 scale;
@@ -33,6 +34,7 @@ typedef struct _tmodel{
 	unsigned int *indices;
 	mat4 model;
 	float x, y, z;
+	vec3 scale;
 	int type;
 	vec3 pos;
 }Tmodel;
@@ -95,7 +97,9 @@ typedef struct _trenderer{
 
 int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int height, float size, int nAttributes);
 int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int height, int thickness, float scale, int nAttributes);
+	
 int instance_draw(Tobject ID, unsigned int *shader, Tcamera camera);
+	
 int instanced_object_buffer(unsigned int *iBuffer, Tobject *ID, unsigned int amount, mat4 matrices[]);
 int instanced_object_draw(Tobject ID, unsigned int amount);
 
@@ -103,8 +107,11 @@ int prepare_lightobj(unsigned int *light_shader, vec3 color);
 int prepare_material(unsigned int *surface_shader, int lights_number, float specular_str);
 int prepare_material_lum(unsigned int *surface_shader, int light_n, bool light_type, vec3 color, float ambient_mag, float linear, float quadratic);
 
-int load_model(Tmodel *model, char *directory, float x, float y, float z, int type);
+int load_model(Tmodel *model, char *directory, float x, float y, float z, float scale, int type);
 int draw_model(Tmodel *model, unsigned int *shader, Tcamera camera);
+
+int instanced_model_buffer(unsigned int *iBuffer, Tmodel *ID, unsigned int amount, mat4 matrices[]);
+int instanced_model_draw(Tmodel ID, unsigned int amount);
 
 int init_camera(Tcamera *camera, Tconfig config, float scale);
 int run_camera(Tcamera *camera, GLFWwindow *window);
