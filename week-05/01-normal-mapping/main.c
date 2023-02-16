@@ -10,15 +10,16 @@ int main()
 	Tskybox skybox;
 	TshadowCM shadowCM;
 	Tobject light;
-	Tobject tile_floor, crate;
+	Tobject tile_floor, crate, brickwall;
 	Tmodel grass_blade;
-	unsigned int floorDiffuse, floorSpecular, crateDiffuse, crateSpecular, crateNormal, baseNormal;
+	unsigned int floorDiffuse, floorSpecular, crateDiffuse, crateSpecular, crateNormal, baseNormal, brickwallDiffuse, brickwallSpec, brickwallNormal;
 	unsigned int lightShader, objectShader, instanceShader, grass_shader;
 	unsigned int uboMatrices;
-	unsigned int ibCrates, ibTiles, ibGrassblades;
+	unsigned int ibCrates, ibTiles, ibGrassblades, ibBrick;
 	unsigned int tilesAmount = 100;
 	unsigned int cratesAmount = 5;
 	unsigned int gbladesAmount = 10000;
+	unsigned int brickwallAmount = 1;
 	unsigned int i, j;
 	float tilesAmountSquared = 0;
 	float objectsHeight = -5.5f;
@@ -26,6 +27,7 @@ int main()
 	mat4 tilesMatrices[100];
 	mat4 cratesMatrices[5];
 	mat4 bladesMatrices[10000];
+	mat4 brickwMatrices[1];
 	vec3 lightColor = {0.5f, 0.6f, 1.0f};
 	vec3 adjustRot = {1.0f, 0.0f, 0.0f};
 	vec3 crateRot = {0.0f, 0.0f, 1.0f};
@@ -54,10 +56,14 @@ int main()
 	createTexture(&crateSpecular, "./source/images/container2_specular.png", 1, 1);
 	createTexture(&crateNormal, "./source/images/crate_03_normal_02.png", 1, 1);
 	createTexture(&baseNormal, "./source/images/base_normal.png", 1, 1);
+	createTexture(&brickwallDiffuse, "./source/images/brickwall.jpg", 0, 1);
+	createTexture(&brickwallSpec, "./source/images/no_specular.png", 1, 1);
+	createTexture(&brickwallNormal, "./source/images/brickwall_normal.jpg", 0, 1);
 	
 	instance_create_cube(&light, 0.0f, 1.0f, 7.0f, 100, 100, 100, 0.5f, 0);
 	instance_create_quad(&tile_floor, 0.0f, 0.0f, 0.0f, 100, 100, 1.0f, 2);
 	instance_create_cube(&crate, 0.0f, 0.0f, 0.0f, 100, 100, 100, 0.5f, 2);
+	instance_create_quad(&brickwall, 0.0f, -4.0f, 5.5f, 100, 100, 1.5f, 2);
 	
 	load_model(&grass_blade, "./source/models/grass blades/blade_00.obj", 0.0f, -5.41f, 0.0f, 0.1f, 0);
 	
@@ -136,10 +142,13 @@ int main()
 		glm_rotate(grass_blade.model, -glm_rad(random()%360), bladeRot);
 		glm_mat4_copy(grass_blade.model, bladesMatrices[i]);
 	}
+	glm_mat4_copy(brickwall.model, brickwMatrices[0]);
+	
 	
 	instanced_object_buffer(&ibTiles , &tile_floor, tilesAmount, tilesMatrices);
 	instanced_object_buffer(&ibCrates , &crate, cratesAmount, cratesMatrices);
 	instanced_model_buffer(&ibCrates , &grass_blade, gbladesAmount, bladesMatrices);
+	instanced_object_buffer(&ibBrick , &brickwall, brickwallAmount, brickwMatrices);
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -176,10 +185,14 @@ int main()
 		instanced_model_draw(grass_blade, gbladesAmount);
 		useShader(&(shadowCM.render_shader));
 		
+		bind_texture(brickwallDiffuse, 0);
+		bind_texture(brickwallSpec, 1);
+		bind_texture(brickwallNormal, 2);
+		instanced_object_draw(brickwall, brickwallAmount);
 		
-		bind_texture(floorDiffuse, 0);
-		bind_texture(floorSpecular, 1);
-		bind_texture(baseNormal, 2);
+		bind_texture(brickwallDiffuse, 0);
+		bind_texture(brickwallSpec, 1);
+		bind_texture(brickwallNormal, 2);
 		instanced_object_draw(tile_floor, tilesAmount);
 		
 		bind_texture(crateDiffuse, 0);
@@ -196,6 +209,7 @@ int main()
 		setVec3(&grass_shader, "light[0].position", light.pos);
 		useShader(&(shadowCM.depth_shader));
 		
+		instanced_object_draw(brickwall, brickwallAmount);
 		instanced_object_draw(tile_floor, tilesAmount);
 		instanced_object_draw(crate, tilesAmount);
 		
