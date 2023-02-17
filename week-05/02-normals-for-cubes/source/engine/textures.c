@@ -73,7 +73,7 @@ int create_skybox(Tskybox *skybox, char *folder, int type)
 		"back.jpg",
 	};
 	
-	instance_create_cube(&(skybox->cube), 0, 0, 0, 100000, 100000, 100000, 1.0f, 1);
+	instance_create_cube(&(skybox->cube), 0, 0, 0, 100000, 100000, 100000, 1.0f, 5);
 	
 	glGenTextures(1, &(skybox->texture));
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skybox->texture);

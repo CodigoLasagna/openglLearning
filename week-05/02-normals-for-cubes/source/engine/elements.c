@@ -6,22 +6,6 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 	int attributes[] = {3, 3, 2, 3, 3};
 	int i, nVertices = 0, n = 0;
 	float hwidth, hheihght;
-	/*
-	GLfloat vertices[32] =
-	{
-		0.0f, 0.0f, 0.0f,	-0.025f, -0.025f, 5.0f,	0, 0,
-		0.0f, 0.0f, 0.0f,	 0.025f, -0.025f, 5.0f,	1, 0,
-		0.0f, 0.0f, 0.0f,	 0.025f,  0.025f, 5.0f,	1, 1,
-		0.0f, 0.0f, 0.0f,	-0.025f,  0.025f, 5.0f,	0, 1
-	};
-	GLfloat vertices[32] =
-	{
-		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0, 0,
-		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	1, 0,
-		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	1, 1,
-		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0, 1,
-	};
-	*/
 	GLfloat vertices[56] =
 	{
 		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0, 0,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
@@ -36,14 +20,12 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 	};
 	vec3 posInd[4];
 	vec2 uvInd[4];
-	vec3 nmInd;
 	vec3 edge[2];
 	vec3 deltaUv[2];
-	
 	vec3 tangent[2];
 	vec3 bitangent[2];
 	float f;
-
+	
 	ID->max_meshes = 1;
 	/*nAttributes += 1;*/
 	(ID->indices_n) = sizeof(indices)/sizeof(indices[0]);
@@ -78,7 +60,6 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 	uvInd[2][0] = 1;	uvInd[2][1] = 1;
 	uvInd[3][0] = 0;	uvInd[3][1] = 1;
 	
-	nmInd[0] = 0.0f; nmInd[1] = 0.0f; nmInd[2] = 1.0f; 
 	
 	/*first triangle*/
 	glm_vec3_sub(posInd[1], posInd[0], edge[0]);
@@ -149,22 +130,22 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 }
 int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int height, int thickness, float scale, int nAttributes)
 {
-	int attributes[] = {3, 3, 2};
+	int attributes[] = {3, 3, 2, 3, 3};
 	int i, nVertices = 0, n = 0;
 	float hwidth, hheihght, hthickens;
-	GLfloat vertices[64] =
+	GLfloat vertices[112] =
 	{
-		0.0f, 0.0f, 0.0f,	-1.0f, -1.0f, -1.0f,	0.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,	-1.0f,  1.0f, -1.0f,	1.0f, 0.0f,
-		
-		0.0f, 0.0f, 0.0f,	-1.0f,  1.0f,  1.0f,	1.0f, 1.0f,
-		0.0f, 0.0f, 0.0f,	-1.0f, -1.0f,  1.0f,	0.0f, 1.0f,
-		
-		0.0f, 0.0f, 0.0f,	 1.0f,  1.0f,  1.0f,	0.0f, 1.0f,
-		0.0f, 0.0f, 0.0f,	 1.0f,  1.0f, -1.0f,	0.0f, 0.0f,
-		
-		0.0f, 0.0f, 0.0f,	 1.0f, -1.0f, -1.0f,	1.0f, 0.0f,
-		0.0f, 0.0f, 0.0f,	 1.0f, -1.0f,  1.0f,	1.0f, 1.0f,
+		0.0f, 0.0f, 0.0f,	-1.0f, -1.0f, -1.0f,	0, 0,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	-1.0f,  1.0f, -1.0f,	1, 0,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+
+		0.0f, 0.0f, 0.0f,	-1.0f,  1.0f,  1.0f,	1, 1,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	-1.0f, -1.0f,  1.0f,	0, 1,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+
+		0.0f, 0.0f, 0.0f,	 1.0f,  1.0f,  1.0f,	0, 1,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	 1.0f,  1.0f, -1.0f,	0, 0,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+
+		0.0f, 0.0f, 0.0f,	 1.0f, -1.0f, -1.0f,	1, 0,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	 1.0f, -1.0f,  1.0f,	1, 1,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
 	};
 	int indices[36] = 
 	{
@@ -186,8 +167,15 @@ int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int 
 		4, 6, 5,
 		4, 7, 6,
 	};
+	vec3 posInd[8];
+	vec2 uvInd[8];
+	vec3 edge[2];
+	vec3 deltaUv[2];
+	vec3 tangent[2];
+	vec3 bitangent[2];
+	float f;
+	
 	ID->max_meshes = 1;
-	nAttributes += 1;
 	(ID->indices_n) = sizeof(indices)/sizeof(indices[0]);
 	(ID->type) = nAttributes;
 	(ID->width) = width;
@@ -201,29 +189,106 @@ int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int 
 	hheihght = (float) height/200;
 	hthickens = (float) thickness/200;
 	
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nAttributes; i++)
 	{
 		nVertices += attributes[i];
 	}
 	
 	/*left to behind*/
-	vertices[0] 			= -hwidth;	vertices[1]					= -hheihght;	vertices[2]					= -hthickens; 
-	vertices[nVertices] 	= -hwidth;	vertices[1+nVertices]		=  hheihght;	vertices[2+nVertices]		= -hthickens;
+	vertices[(nVertices*0)] = -hwidth;	vertices[1+(nVertices*0)] = -hheihght;	vertices[2+(nVertices*0)] = -hthickens; 
+	vertices[(nVertices*1)] = -hwidth;	vertices[1+(nVertices*1)] =  hheihght;	vertices[2+(nVertices*1)] = -hthickens;
 
 	/*behind to right*/
-	vertices[(nVertices*2)]	= -hwidth;	vertices[1+(nVertices*2)]	=  hheihght;	vertices[2+(nVertices*2)]	=  hthickens;
-	vertices[(nVertices*3)]	= -hwidth;	vertices[1+(nVertices*3)]	= -hheihght;	vertices[2+(nVertices*3)]	=  hthickens;
+	vertices[(nVertices*2)] = -hwidth;	vertices[1+(nVertices*2)] =  hheihght;	vertices[2+(nVertices*2)] =  hthickens;
+	vertices[(nVertices*3)] = -hwidth;	vertices[1+(nVertices*3)] = -hheihght;	vertices[2+(nVertices*3)] =  hthickens;
 
 
 	/*right to front*/
-	vertices[(nVertices*4)]	=  hwidth;	vertices[1+(nVertices*4)]	=  hheihght;	vertices[2+(nVertices*4)]	=  hthickens;
-	vertices[(nVertices*5)]	=  hwidth;	vertices[1+(nVertices*5)]	=  hheihght;	vertices[2+(nVertices*5)]	= -hthickens;
+	vertices[(nVertices*4)] =  hwidth;	vertices[1+(nVertices*4)] =  hheihght;	vertices[2+(nVertices*4)] =  hthickens;
+	vertices[(nVertices*5)] =  hwidth;	vertices[1+(nVertices*5)] =  hheihght;	vertices[2+(nVertices*5)] = -hthickens;
 
 
 	/*front to left*/
-	vertices[(nVertices*6)]	=  hwidth;	vertices[1+(nVertices*6)]	= -hheihght;	vertices[2+(nVertices*6)]	= -hthickens;
-	vertices[(nVertices*7)]	=  hwidth;	vertices[1+(nVertices*7)]	= -hheihght;	vertices[2+(nVertices*7)]	=  hthickens;
+	vertices[(nVertices*6)] =  hwidth;	vertices[1+(nVertices*6)] = -hheihght;	vertices[2+(nVertices*6)] = -hthickens;
+	vertices[(nVertices*7)] =  hwidth;	vertices[1+(nVertices*7)] = -hheihght;	vertices[2+(nVertices*7)] =  hthickens;
+	
+	/*Normal Map tangent space*/
+	posInd[0][0] = -hwidth;	posInd[0][1] = -hheihght;	posInd[0][2] = -thickness;
+	posInd[1][0] = -hwidth;	posInd[1][1] =  hheihght;	posInd[1][2] = -thickness;
+	
+	posInd[2][0] = -hwidth;	posInd[2][1] =  hheihght;	posInd[2][2] =  thickness;
+	posInd[3][0] = -hwidth;	posInd[3][1] = -hheihght;	posInd[3][2] =  thickness;
+	
+	posInd[4][0] =  hwidth;	posInd[4][1] =  hheihght;	posInd[4][2] =  thickness;
+	posInd[5][0] =  hwidth;	posInd[5][1] =  hheihght;	posInd[5][2] = -thickness;
+	
+	posInd[6][0] =  hwidth;	posInd[6][1] = -hheihght;	posInd[6][2] = -thickness;
+	posInd[7][0] =  hwidth;	posInd[7][1] = -hheihght;	posInd[7][2] =  thickness;
+	
+	uvInd[0][0] = 0;	uvInd[0][1] = 0;
+	uvInd[1][0] = 1;	uvInd[1][1] = 0;
+	
+	uvInd[2][0] = 1;	uvInd[2][1] = 1;
+	uvInd[3][0] = 0;	uvInd[3][1] = 1;
+	
+	uvInd[4][0] = 0;	uvInd[4][1] = 1;
+	uvInd[5][0] = 0;	uvInd[5][1] = 0;
+	
+	uvInd[6][0] = 1;	uvInd[6][1] = 0;
+	uvInd[7][0] = 1;	uvInd[7][1] = 1;
+	
+	/*first triangle*/
+	glm_vec3_sub(posInd[1], posInd[0], edge[0]);
+	glm_vec3_sub(posInd[2], posInd[0], edge[1]);
+	
+	glm_vec2_sub(uvInd[1], uvInd[0], deltaUv[0]);
+	glm_vec2_sub(uvInd[2], uvInd[0], deltaUv[1]);
 
+	f = 1.0f / (deltaUv[0][0] * deltaUv[1][1] - deltaUv[1][0] * deltaUv[0][1]);
+	
+	tangent[0][0] = f * (deltaUv[1][1] * edge[0][0] - deltaUv[0][1] * edge[1][0]);
+	tangent[0][1] = f * (deltaUv[1][1] * edge[0][1] - deltaUv[0][1] * edge[1][1]);
+	tangent[0][2] = f * (deltaUv[1][1] * edge[0][2] - deltaUv[0][1] * edge[1][2]);
+	
+	bitangent[0][0] = f * (-deltaUv[1][0] * edge[0][0] + deltaUv[0][0] * edge[1][0]);
+	bitangent[0][1] = f * (-deltaUv[1][0] * edge[0][1] + deltaUv[0][0] * edge[1][1]);
+	bitangent[0][2] = f * (-deltaUv[1][0] * edge[0][2] + deltaUv[0][0] * edge[1][2]);
+	/*second triangle*/
+	glm_vec3_sub(posInd[2], posInd[0], edge[0]);
+	glm_vec3_sub(posInd[3], posInd[0], edge[1]);
+	
+	glm_vec2_sub(uvInd[2], uvInd[0], deltaUv[0]);
+	glm_vec2_sub(uvInd[3], uvInd[0], deltaUv[1]);
+	
+	f = 1.0f / (deltaUv[0][0] * deltaUv[1][1] - deltaUv[1][0] * deltaUv[0][1]);
+	
+	tangent[1][0] = f * (deltaUv[1][1] * edge[0][0] - deltaUv[0][1] * edge[1][0]);
+	tangent[1][1] = f * (deltaUv[1][1] * edge[0][1] - deltaUv[0][1] * edge[1][1]);
+	tangent[1][2] = f * (deltaUv[1][1] * edge[0][2] - deltaUv[0][1] * edge[1][2]);
+	
+	bitangent[1][0] = f * (-deltaUv[1][0] * edge[0][0] + deltaUv[0][0] * edge[1][0]);
+	bitangent[1][1] = f * (-deltaUv[1][0] * edge[0][1] + deltaUv[0][0] * edge[1][1]);
+	bitangent[1][2] = f * (-deltaUv[1][0] * edge[0][2] + deltaUv[0][0] * edge[1][2]);
+	
+	/*adding tangent and bitangent to vector*/
+	vertices[8+(nVertices*0)] = tangent[1][0]; vertices[9+(nVertices*0)] = tangent[1][1]; vertices[10+(nVertices*0)] = tangent[1][2]; 
+	vertices[8+(nVertices*1)] = tangent[1][0]; vertices[9+(nVertices*1)] = tangent[1][1]; vertices[10+(nVertices*1)] = tangent[1][2]; 
+	vertices[8+(nVertices*2)] = tangent[1][0]; vertices[9+(nVertices*2)] = tangent[1][1]; vertices[10+(nVertices*2)] = tangent[1][2]; 
+	vertices[8+(nVertices*3)] = tangent[1][0]; vertices[9+(nVertices*3)] = tangent[1][1]; vertices[10+(nVertices*3)] = tangent[1][2]; 
+	vertices[8+(nVertices*4)] = tangent[1][0]; vertices[9+(nVertices*4)] = tangent[1][1]; vertices[10+(nVertices*4)] = tangent[1][2]; 
+	vertices[8+(nVertices*5)] = tangent[1][0]; vertices[9+(nVertices*5)] = tangent[1][1]; vertices[10+(nVertices*5)] = tangent[1][2]; 
+	vertices[8+(nVertices*6)] = tangent[1][0]; vertices[9+(nVertices*6)] = tangent[1][1]; vertices[10+(nVertices*6)] = tangent[1][2]; 
+	vertices[8+(nVertices*7)] = tangent[1][0]; vertices[9+(nVertices*7)] = tangent[1][1]; vertices[10+(nVertices*7)] = tangent[1][2]; 
+	
+	vertices[11+(nVertices*0)] = bitangent[1][0]; vertices[12+(nVertices*0)] = bitangent[1][1]; vertices[13+(nVertices*0)] = bitangent[1][2]; 
+	vertices[11+(nVertices*1)] = bitangent[1][0]; vertices[12+(nVertices*1)] = bitangent[1][1]; vertices[13+(nVertices*1)] = bitangent[1][2]; 
+	vertices[11+(nVertices*2)] = bitangent[1][0]; vertices[12+(nVertices*2)] = bitangent[1][1]; vertices[13+(nVertices*2)] = bitangent[1][2]; 
+	vertices[11+(nVertices*3)] = bitangent[1][0]; vertices[12+(nVertices*3)] = bitangent[1][1]; vertices[13+(nVertices*3)] = bitangent[1][2]; 
+	vertices[11+(nVertices*4)] = bitangent[1][0]; vertices[12+(nVertices*4)] = bitangent[1][1]; vertices[13+(nVertices*4)] = bitangent[1][2]; 
+	vertices[11+(nVertices*5)] = bitangent[1][0]; vertices[12+(nVertices*5)] = bitangent[1][1]; vertices[13+(nVertices*5)] = bitangent[1][2]; 
+	vertices[11+(nVertices*6)] = bitangent[1][0]; vertices[12+(nVertices*6)] = bitangent[1][1]; vertices[13+(nVertices*6)] = bitangent[1][2]; 
+	vertices[11+(nVertices*7)] = bitangent[1][0]; vertices[12+(nVertices*7)] = bitangent[1][1]; vertices[13+(nVertices*7)] = bitangent[1][2]; 
+	
 	glGenVertexArrays(1, &(ID->VAO));
 	glGenBuffers(1, &(ID->VBO));
 	glGenBuffers(1, &(ID->EBO));
