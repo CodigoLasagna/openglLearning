@@ -3,9 +3,10 @@
 
 int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int height, float scale, int nAttributes)
 {
-	int attributes[] = {3, 3, 2};
+	int attributes[] = {3, 3, 2, 3, 3};
 	int i, nVertices = 0, n = 0;
 	float hwidth, hheihght;
+	/*
 	GLfloat vertices[32] =
 	{
 		0.0f, 0.0f, 0.0f,	-0.025f, -0.025f, 5.0f,	0, 0,
@@ -13,34 +14,115 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 		0.0f, 0.0f, 0.0f,	 0.025f,  0.025f, 5.0f,	1, 1,
 		0.0f, 0.0f, 0.0f,	-0.025f,  0.025f, 5.0f,	0, 1
 	};
+	GLfloat vertices[32] =
+	{
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0, 0,
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	1, 0,
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	1, 1,
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0, 1,
+	};
+	*/
+	GLfloat vertices[56] =
+	{
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0, 0,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	1, 0,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	1, 1,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 1.0f,	0, 1,	0.0f, 0.0f, 0.0f,	0.0f, 0.0f, 0.0f,
+	};
 	int indices[6] = 
 	{
 		0, 2, 3,
 		0, 1, 2,
 	};
+	vec3 posInd[4];
+	vec2 uvInd[4];
+	vec3 nmInd;
+	vec3 edge[2];
+	vec3 deltaUv[2];
+	
+	vec3 tangent[2];
+	vec3 bitangent[2];
+	float f;
+
 	ID->max_meshes = 1;
-	nAttributes += 1;
+	/*nAttributes += 1;*/
 	(ID->indices_n) = sizeof(indices)/sizeof(indices[0]);
 	(ID->type) = nAttributes;
 	(ID->width) = width;
 	(ID->height) = height;
-	(ID->pos[0]) = x;
-	(ID->pos[1]) = y;
-	(ID->pos[2]) = z;
+	(ID->position[0]) = x;
+	(ID->position[1]) = y;
+	(ID->position[2]) = z;
 	glm_vec3_fill(ID->scale, scale);
 	hwidth = (float) width/200;
 	hheihght = (float) height/200;
 	
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < nAttributes; i++)
 	{
 		nVertices += attributes[i];
 	}
 	
-	vertices[0] =				-hwidth;	vertices[1] =				-hheihght;	vertices[2]					= 0.0f;
-	vertices[nVertices] =		 hwidth;	vertices[1+nVertices] =		-hheihght;	vertices[2+nVertices]		= 0.0f;
-	vertices[(nVertices*2)] =	 hwidth;	vertices[1+(nVertices*2)] =	 hheihght;	vertices[2+(nVertices*2)]	= 0.0f;
-	vertices[(nVertices*3)] =	-hwidth;	vertices[1+(nVertices*3)] =	 hheihght;	vertices[2+(nVertices*3)]	= 0.0f;
+	vertices[(nVertices*0)] = -hwidth;	vertices[1+(nVertices*0)] = -hheihght;	vertices[2+(nVertices*0)] = 0.0f;
+	vertices[(nVertices*1)] =  hwidth;	vertices[1+(nVertices*1)] = -hheihght;	vertices[2+(nVertices*1)] = 0.0f;
+	vertices[(nVertices*2)] =  hwidth;	vertices[1+(nVertices*2)] =  hheihght;	vertices[2+(nVertices*2)] = 0.0f;
+	vertices[(nVertices*3)] = -hwidth;	vertices[1+(nVertices*3)] =  hheihght;	vertices[2+(nVertices*3)] = 0.0f;
 	
+	/*Normal Map tangent space*/
+	posInd[0][0] = -hwidth;	posInd[0][1] = -hheihght;	posInd[0][2] = 0.0f;
+	posInd[1][0] =  hwidth;	posInd[1][1] = -hheihght;	posInd[1][2] = 0.0f;
+	posInd[2][0] =  hwidth;	posInd[2][1] =  hheihght;	posInd[2][2] = 0.0f;
+	posInd[3][0] = -hwidth;	posInd[3][1] =  hheihght;	posInd[3][2] = 0.0f;
+	
+	uvInd[0][0] = 0;	uvInd[0][1] = 0;
+	uvInd[1][0] = 1;	uvInd[1][1] = 0;
+	uvInd[2][0] = 1;	uvInd[2][1] = 1;
+	uvInd[3][0] = 0;	uvInd[3][1] = 1;
+	
+	nmInd[0] = 0.0f; nmInd[1] = 0.0f; nmInd[2] = 1.0f; 
+	
+	/*first triangle*/
+	glm_vec3_sub(posInd[1], posInd[0], edge[0]);
+	glm_vec3_sub(posInd[2], posInd[0], edge[1]);
+	
+	glm_vec2_sub(uvInd[1], uvInd[0], deltaUv[0]);
+	glm_vec2_sub(uvInd[2], uvInd[0], deltaUv[1]);
+
+	f = 1.0f / (deltaUv[0][0] * deltaUv[1][1] - deltaUv[1][0] * deltaUv[0][1]);
+	
+	tangent[0][0] = f * (deltaUv[1][1] * edge[0][0] - deltaUv[0][1] * edge[1][0]);
+	tangent[0][1] = f * (deltaUv[1][1] * edge[0][1] - deltaUv[0][1] * edge[1][1]);
+	tangent[0][2] = f * (deltaUv[1][1] * edge[0][2] - deltaUv[0][1] * edge[1][2]);
+	
+	bitangent[0][0] = f * (-deltaUv[1][0] * edge[0][0] + deltaUv[0][0] * edge[1][0]);
+	bitangent[0][1] = f * (-deltaUv[1][0] * edge[0][1] + deltaUv[0][0] * edge[1][1]);
+	bitangent[0][2] = f * (-deltaUv[1][0] * edge[0][2] + deltaUv[0][0] * edge[1][2]);
+	/*second triangle*/
+	glm_vec3_sub(posInd[2], posInd[0], edge[0]);
+	glm_vec3_sub(posInd[3], posInd[0], edge[1]);
+	
+	glm_vec2_sub(uvInd[2], uvInd[0], deltaUv[0]);
+	glm_vec2_sub(uvInd[3], uvInd[0], deltaUv[1]);
+	
+	f = 1.0f / (deltaUv[0][0] * deltaUv[1][1] - deltaUv[1][0] * deltaUv[0][1]);
+	
+	tangent[1][0] = f * (deltaUv[1][1] * edge[0][0] - deltaUv[0][1] * edge[1][0]);
+	tangent[1][1] = f * (deltaUv[1][1] * edge[0][1] - deltaUv[0][1] * edge[1][1]);
+	tangent[1][2] = f * (deltaUv[1][1] * edge[0][2] - deltaUv[0][1] * edge[1][2]);
+	
+	bitangent[1][0] = f * (-deltaUv[1][0] * edge[0][0] + deltaUv[0][0] * edge[1][0]);
+	bitangent[1][1] = f * (-deltaUv[1][0] * edge[0][1] + deltaUv[0][0] * edge[1][1]);
+	bitangent[1][2] = f * (-deltaUv[1][0] * edge[0][2] + deltaUv[0][0] * edge[1][2]);
+	
+	/*adding tangent and bitangent to vector*/
+	vertices[8+(nVertices*0)] = tangent[1][0]; vertices[9+(nVertices*0)] = tangent[1][1]; vertices[10+(nVertices*0)] = tangent[1][2]; 
+	vertices[8+(nVertices*1)] = tangent[1][0]; vertices[9+(nVertices*1)] = tangent[1][1]; vertices[10+(nVertices*1)] = tangent[1][2]; 
+	vertices[8+(nVertices*2)] = tangent[1][0]; vertices[9+(nVertices*2)] = tangent[1][1]; vertices[10+(nVertices*2)] = tangent[1][2]; 
+	vertices[8+(nVertices*3)] = tangent[1][0]; vertices[9+(nVertices*3)] = tangent[1][1]; vertices[10+(nVertices*3)] = tangent[1][2]; 
+	
+	vertices[11+(nVertices*0)] = bitangent[1][0]; vertices[12+(nVertices*0)] = bitangent[1][1]; vertices[13+(nVertices*0)] = bitangent[1][2]; 
+	vertices[11+(nVertices*1)] = bitangent[1][0]; vertices[12+(nVertices*1)] = bitangent[1][1]; vertices[13+(nVertices*1)] = bitangent[1][2]; 
+	vertices[11+(nVertices*2)] = bitangent[1][0]; vertices[12+(nVertices*2)] = bitangent[1][1]; vertices[13+(nVertices*2)] = bitangent[1][2]; 
+	vertices[11+(nVertices*3)] = bitangent[1][0]; vertices[12+(nVertices*3)] = bitangent[1][1]; vertices[13+(nVertices*3)] = bitangent[1][2]; 
 	
 	glGenVertexArrays(1, &(ID->VAO));
 	glGenBuffers(1, &(ID->VBO));
@@ -59,7 +141,7 @@ int instance_create_quad(Tobject *ID, float x, float y, float z, int width, int 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	
 	glm_mat4_identity(ID->model);
-	glm_translate(ID->model, ID->pos);
+	glm_translate(ID->model, ID->position);
 	glm_scale(ID->model, (ID->scale));
 	
 	glBindVertexArray(0);
@@ -111,9 +193,9 @@ int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int 
 	(ID->width) = width;
 	(ID->height) = height;
 	(ID->thickness) = thickness;
-	(ID->pos[0]) = x;
-	(ID->pos[1]) = y;
-	(ID->pos[2]) = z;
+	(ID->position[0]) = x;
+	(ID->position[1]) = y;
+	(ID->position[2]) = z;
 	glm_vec3_fill(ID->scale, scale);
 	hwidth = (float) width/200;
 	hheihght = (float) height/200;
@@ -160,7 +242,7 @@ int instance_create_cube(Tobject *ID, float x, float y, float z, int width, int 
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	
 	glm_mat4_identity(ID->model);
-	glm_translate(ID->model, ID->pos);
+	glm_translate(ID->model, ID->position);
 	glm_scale(ID->model, (ID->scale));
 	glBindVertexArray(0);
 	return 1;
@@ -182,19 +264,19 @@ int instanced_object_buffer(unsigned int *iBuffer, Tobject *ID, unsigned int amo
 	glBindBuffer(GL_ARRAY_BUFFER, *iBuffer);
 	glBufferData(GL_ARRAY_BUFFER, (unsigned int) (amount * sizeof(mat4)), (float*)matrices, GL_STATIC_DRAW);
 	glBindVertexArray(ID->VAO);
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*)0);
-	glEnableVertexAttribArray(4);
-	glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (1 * vec4size));
 	glEnableVertexAttribArray(5);
-	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (2 * vec4size));
+	glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (0 * vec4size));
 	glEnableVertexAttribArray(6);
-	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (3 * vec4size));
+	glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (1 * vec4size));
+	glEnableVertexAttribArray(7);
+	glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (2 * vec4size));
+	glEnableVertexAttribArray(8);
+	glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, 4 * vec4size, (void*) (3 * vec4size));
 	
-	glVertexAttribDivisor(3, 1);
-	glVertexAttribDivisor(4, 1);
 	glVertexAttribDivisor(5, 1);
 	glVertexAttribDivisor(6, 1);
+	glVertexAttribDivisor(7, 1);
+	glVertexAttribDivisor(8, 1);
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	return 1;
@@ -655,7 +737,7 @@ int instanced_model_draw(Tmodel ID, unsigned int amount)
 
 int prepare_renderer(Trenderer *renderer, Tconfig config)
 {
-	instance_create_quad(&(renderer->screen), 0, 0, 0, 200.0f, 200.0f, 1.0f, 2);
+	instance_create_quad(&(renderer->screen), 0, 0, 0, 200.0f, 200.0f, 1.0f, 5);
 	glGenFramebuffers(1, &(renderer->frameBuffer));
 	glBindFramebuffer(GL_FRAMEBUFFER, renderer->frameBuffer);
 	
@@ -822,28 +904,28 @@ int calculate_shadow_cubemap_light(TshadowCM *shadowCM, Tobject light, Tcamera c
 {
 	glm_perspective(glm_rad(90.0f), shadowCM->aspect_ratio, shadowCM->near_plane, shadowCM->far_plane, shadowCM->shadowProj);
 	
-	glm_vec3_add(light.pos, shadowCM->lookatVecs[0], shadowCM->vecHelper);
-	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_vec3_add(light.position, shadowCM->lookatVecs[0], shadowCM->vecHelper);
+	glm_lookat(light.position, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
 	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[0]);
 	
-	glm_vec3_add(light.pos, shadowCM->lookatVecs[1], shadowCM->vecHelper);
-	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_vec3_add(light.position, shadowCM->lookatVecs[1], shadowCM->vecHelper);
+	glm_lookat(light.position, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
 	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[1]);
 	
-	glm_vec3_add(light.pos, shadowCM->lookatVecs[2], shadowCM->vecHelper);
-	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[4], shadowCM->matHelper);
+	glm_vec3_add(light.position, shadowCM->lookatVecs[2], shadowCM->vecHelper);
+	glm_lookat(light.position, shadowCM->vecHelper, shadowCM->lookatVecs[4], shadowCM->matHelper);
 	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[2]);
 	
-	glm_vec3_add(light.pos, shadowCM->lookatVecs[3], shadowCM->vecHelper);
-	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[5], shadowCM->matHelper);
+	glm_vec3_add(light.position, shadowCM->lookatVecs[3], shadowCM->vecHelper);
+	glm_lookat(light.position, shadowCM->vecHelper, shadowCM->lookatVecs[5], shadowCM->matHelper);
 	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[3]);
 	
-	glm_vec3_add(light.pos, shadowCM->lookatVecs[4], shadowCM->vecHelper);
-	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_vec3_add(light.position, shadowCM->lookatVecs[4], shadowCM->vecHelper);
+	glm_lookat(light.position, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
 	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[4]);
 	
-	glm_vec3_add(light.pos, shadowCM->lookatVecs[5], shadowCM->vecHelper);
-	glm_lookat(light.pos, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
+	glm_vec3_add(light.position, shadowCM->lookatVecs[5], shadowCM->vecHelper);
+	glm_lookat(light.position, shadowCM->vecHelper, shadowCM->lookatVecs[3], shadowCM->matHelper);
 	glm_mul(shadowCM->shadowProj, shadowCM->matHelper, shadowCM->shadowTransforms[5]);
 	
 	useShader(&(shadowCM->render_shader));

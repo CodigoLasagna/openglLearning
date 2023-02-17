@@ -7,6 +7,12 @@ in VS_OUT
 	vec3 FragPos;
 	vec3 Normal;
 	vec2 TexCoords;
+	/*
+	vec3 TangentLighPos;
+	vec3 TangentViewPos;
+	vec3 TangentFragPos;
+	*/
+	mat3 TBN;
 } fs_in;
 
 struct Material {
@@ -58,8 +64,11 @@ vec3 gridSamplingDisk[20] = vec3[]
 void main()
 {
 	int i;
-	vec3 normal = texture(material.normal, fs_in.TexCoords).rgb;
-	normal = normalize(normal * 2.0f - 1.0f);
+	vec3 normal;
+	
+	normal = texture(material.normal, fs_in.TexCoords).rgb;
+	normal = normal * 2.0f - 1.0f;
+	normal = normalize(fs_in.TBN * normal);
 	vec3 viewDir = normalize(viewPos - fs_in.FragPos);
 	vec3 result = vec3(0.0f);
 	for (i = 0; i < n_lights; i++)

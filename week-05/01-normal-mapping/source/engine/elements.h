@@ -21,7 +21,7 @@ typedef struct _tobject{
 	unsigned int EBO; /*Element buffer object*/
 	unsigned int max_meshes;
 	int width, height, thickness;
-	vec3 pos;
+	vec3 position;
 	vec3 scale;
 	int type;
 	int indices_n;
