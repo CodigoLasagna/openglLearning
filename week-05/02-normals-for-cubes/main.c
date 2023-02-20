@@ -12,7 +12,7 @@ int main()
 	Tobject light;
 	Tobject tile_floor, crate;
 	Tmodel grass_blade;
-	unsigned int floorDiffuse, floorSpecular, crateDiffuse, crateSpecular, crateNormal, baseNormal, grass_diffuse;
+	unsigned int floorDiffuse, floorSpecular, crateDiffuse, crateSpecular, crateNormal, crateDepth, baseNormal, grass_diffuse;
 	unsigned int lightShader, objectShader, instanceShader, grass_shader;
 	unsigned int uboMatrices;
 	unsigned int ibCrates, ibTiles, ibGrassblades, ibBrick;
@@ -22,7 +22,7 @@ int main()
 	unsigned int brickwallAmount = 1;
 	unsigned int i, j;
 	float tilesAmountSquared = 0;
-	float objectsHeight = -5.5f;
+	float objectsHeight = -2.0f;
 	int x, y, z;
 	mat4 tilesMatrices[100];
 	mat4 cratesMatrices[4];
@@ -55,6 +55,7 @@ int main()
 	createTexture(&crateDiffuse, "./source/images/crate_03.png", 1, 1);
 	createTexture(&crateSpecular, "./source/images/container2_specular.png", 1, 1);
 	createTexture(&crateNormal, "./source/images/crate_03_new_normal.png", 1, 1);
+	createTexture(&crateDepth, "./source/images/crate_03_depthmap.png", 1, 1);
 	createTexture(&baseNormal, "./source/images/base_normal.png", 1, 1);
 	createTexture(&grass_diffuse, "./source/images/grass_pink.png", 0, 1);
 	
@@ -129,12 +130,14 @@ int main()
 	{
 		glm_mat4_identity(grass_blade.model);
 		grass_blade.pos[0] = (random()%(long)(tilesAmountSquared*2.0f))-tilesAmountSquared;
+		grass_blade.pos[1] = objectsHeight-0.005;
 		grass_blade.pos[2] = (random()%(long)(tilesAmountSquared*2.0f))-tilesAmountSquared;
 		grass_blade.pos[0] += ((float)(random()%10000)/10000.0f)-0.5f;
 		grass_blade.pos[2] += ((float)(random()%10000)/10000.0f)-0.5f;
-		glm_translate(grass_blade.model, grass_blade.pos);
 		grass_blade.scale[1] = 0.1;
 		grass_blade.scale[1] += (float)(random()%5)/50.0f;
+		grass_blade.pos[1] += grass_blade.scale[1]/2;
+		glm_translate(grass_blade.model, grass_blade.pos);
 		glm_scale(grass_blade.model, grass_blade.scale);
 		glm_rotate(grass_blade.model, -glm_rad(random()%360), bladeRot);
 		glm_mat4_copy(grass_blade.model, bladesMatrices[i]);
@@ -160,11 +163,7 @@ int main()
 		processInput(window, &config);
 		
 		light.position[0] = sin(glfwGetTime()/2.0f)*7.0f;
-		/*
-		light.position[0] = cos(glfwGetTime()/2.0f)*3.25f;
-		light.position[1] = cos(glfwGetTime()*2.0f)*0.5f+0.75f;
-		*/
-		light.position[1] = cos(glfwGetTime()*2.0f)-3.0f;
+		light.position[1] = cos(glfwGetTime()*2.0f);
 		light.position[2] = cos(glfwGetTime()/2.0f)*7.0f;
 		
 		glm_mat4_identity(light.model);
@@ -182,10 +181,6 @@ int main()
 		instanced_model_draw(grass_blade, gbladesAmount);
 		useShader(&(shadowCM.render_shader));
 		
-		bind_texture(crateDiffuse, 0);
-		bind_texture(crateSpecular, 1);
-		bind_texture(crateNormal, 2);
-		
 		bind_texture(floorDiffuse, 0);
 		bind_texture(floorSpecular, 1);
 		bind_texture(baseNormal, 2);
@@ -194,6 +189,7 @@ int main()
 		bind_texture(crateDiffuse, 0);
 		bind_texture(crateSpecular, 1);
 		bind_texture(crateNormal, 2);
+		bind_texture(crateDepth, 3);
 		instanced_object_draw(crate, cratesAmount);
 		
 		/*render shadow scene*/

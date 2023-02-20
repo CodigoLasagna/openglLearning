@@ -47,6 +47,8 @@ uniform vec3 viewPos;
 
 vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir);
 float ShadowCalculations(vec3 fragPos, Light light);
+vec2 ParallaxMapping(vec2 TexCoords, vec3 viewDir);
+vec2 texCoordsHeightMap;
 
 vec3 gridSamplingDisk[20] = vec3[]
 (
@@ -64,7 +66,8 @@ void main()
 	vec3 viewDir;
 	
 	viewDir = normalize(viewPos - fs_in.FragPos);
-	normal = texture(material.normalMap, fs_in.TexCoords).rgb;
+	texCoordsHeightMap = ParallaxMapping(fs_in.TexCoords, viewDir);
+	normal = texture(material.normalMap, texCoordsHeightMap).rgb;
 	normal = normal * 2.0f - 1.0f;
 	normal = normalize(fs_in.TBN * normal);
 	vec3 result = vec3(0.0f);
@@ -115,7 +118,7 @@ vec3 CalcPointLight(Light light, vec3 normal, vec3 fragPos, vec3 viewDir)
 	}
 	color = texture(material.diffuseMap, fs_in.TexCoords).rgb;
 	vec3 ambient = light.ambient * color;
-	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuseMap, fs_in.TexCoords)) ;
+	vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuseMap, texCoordsHeightMap)) ;
 	vec3 emmision = texture(material.emmisionMap, fs_in.TexCoords).rgb;
 	
 	float attenuation = 1.0f / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
@@ -153,4 +156,12 @@ float ShadowCalculations(vec3 fragPos, Light light)
 	shadow /= float(samples);
 	
 	return shadow;
+}
+
+vec2 ParallaxMapping(vec2 TexCoords, vec3 viewDir)
+{
+	float height_scale = 0.01;
+	float height =  texture(material.depthMap, TexCoords).r;
+	vec2 p = viewDir.xy / viewDir.z * (height * height_scale);
+	return TexCoords - p;
 }

@@ -566,9 +566,10 @@ int prepare_material(unsigned int *surface_shader, int lights_number, float spec
 {
 	setInt(surface_shader, "n_lights", lights_number);
 	setFloat(surface_shader, "material.shininess", specular_str);
-	setInt(surface_shader, "material.diffuse", 0);
-	setInt(surface_shader, "material.specular", 1);
-	setInt(surface_shader, "material.normal", 2);
+	setInt(surface_shader, "material.diffuseMap", 0);
+	setInt(surface_shader, "material.specularMap", 1);
+	setInt(surface_shader, "material.normalMap", 2);
+	setInt(surface_shader, "material.depthMap", 3);
 	
 	return 0;
 }
